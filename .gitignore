@@ -1,0 +1,7 @@
+﻿.vs
+PcPartsStore/PcPartsStore.Client/obj
+PcPartsStore/PcPartsStore/bin
+PcPartsStore/PcPartsStore/obj
+PcPartsStore/PcPartsStore.Client/bin
+Shared/bin
+Shared/obj
