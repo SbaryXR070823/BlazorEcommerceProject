@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Components.WebAssembly.Hosting;
 using Microsoft.AspNetCore.Http.Features;
 using PcPartsStore.Client.Services;
+using Shared.Services;
 
 
 var builder = WebAssemblyHostBuilder.CreateDefault(args);
@@ -12,7 +13,7 @@ builder.Services.AddScoped(sp => new HttpClient
 
 builder.Services.AddTransient<IProductApiService, ProductApiService>();
 builder.Services.AddTransient<ICategoryApiService, CategoryApiService>();
-
+builder.Services.AddScoped<SpinnerService>();
 builder.Services.AddAuthorizationCore();
 builder.Services.AddCascadingAuthenticationState();
 builder.Services.AddAuthenticationStateDeserialization();
