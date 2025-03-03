@@ -1,5 +1,6 @@
 ﻿@page "/products"
 @using PcPartsStore.Client.Services
+@using Shared.Dto
 @using Shared.Models
 @using Shared.Services
 @inject NavigationManager Navigation
@@ -7,6 +8,7 @@
 @inject IProductApiService ProductService
 @inject ICategoryApiService CategoryService
 @inject SpinnerService SpinnerService
+@inject ICartItemApiService CartService
 @rendermode @(new InteractiveWebAssemblyRenderMode(prerender: false))
 
 <PageTitle>Manage Products</PageTitle>
@@ -82,7 +84,7 @@
                                 @if (!string.IsNullOrEmpty(product.ImageBase64))
                                 {
                                     <img src="data:image/png;base64,@product.ImageBase64" class="product-image"
-                                         alt="@product.Name" style="max-height: 180px; max-width: 100%; object-fit: contain;" />
+                                    alt="@product.Name" style="max-height: 180px; max-width: 100%; object-fit: contain;" />
                                 }
                                 else
                                 {
@@ -163,16 +165,20 @@
     private int productIdToDelete;
     private bool isAdmin = false;
     private List<string> userRoles = new List<string>();
+    private UserInfoDto userData = new UserInfoDto();
+    private int currentCountOfCartItems = 0;
 
     protected override async Task OnInitializedAsync()
     {
         await SpinnerService.ShowSpinnerAsync();
+        userData = await UserService.GetUserInfoAsync();
         categories = await CategoryService.GetCategoriesAsync();
         products = await ProductService.GetProductsAsync(filters);
         userRoles = await UserService.GetUserRoleAsync();
         if (userRoles == null || !userRoles.Any())
         {
             isAdmin = false;
+            currentCountOfCartItems = await CartService.GetCountOfCartItemsAsync();
         }
         else
         {

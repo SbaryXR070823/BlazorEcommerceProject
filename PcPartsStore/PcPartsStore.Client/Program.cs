@@ -1,3 +1,4 @@
+using Blazored.LocalStorage;
 using Microsoft.AspNetCore.Components.WebAssembly.Hosting;
 using Microsoft.AspNetCore.Http.Features;
 using PcPartsStore.Client.Services;
@@ -14,10 +15,13 @@ builder.Services.AddScoped(sp => new HttpClient
 builder.Services.AddTransient<IProductApiService, ProductApiService>();
 builder.Services.AddTransient<ICategoryApiService, CategoryApiService>();
 builder.Services.AddTransient<IUserApiService, UserApiService>();
+builder.Services.AddTransient<ICartItemApiService, CartItemApiService>();
 builder.Services.AddScoped<SpinnerService>();
 builder.Services.AddAuthorizationCore();
 builder.Services.AddCascadingAuthenticationState();
 builder.Services.AddAuthenticationStateDeserialization();
+builder.Services.AddBlazoredLocalStorage();
+builder.Services.AddScoped<LocalStorageService>();
 builder.Services.Configure<FormOptions>(options =>
 {
     options.MultipartBodyLengthLimit = 20 * 1024 * 1024 * 100;
