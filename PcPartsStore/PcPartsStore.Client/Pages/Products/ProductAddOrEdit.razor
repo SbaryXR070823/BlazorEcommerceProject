@@ -4,10 +4,12 @@
 @using PcPartsStore
 @using Shared.Dto
 @using Shared.Models
+@using Shared.Services
 @inject IProductApiService ProductService
 @inject NavigationManager Navigation
 @inject IJSRuntime JSRuntime
 @inject HttpClient HttpClient
+@inject SpinnerService SpinnerService
 @inject ICategoryApiService CategoryService
 @rendermode @(new InteractiveWebAssemblyRenderMode(prerender: false))
 
@@ -98,6 +100,7 @@
 
     protected override async Task OnInitializedAsync()
     {
+        await SpinnerService.ShowSpinnerAsync();
         var categoryList = await CategoryService.GetCategoriesAsync();
         categories = categoryList.ToDictionary(c => c.Id, c => c.Name);
 
@@ -108,12 +111,14 @@
             IsUpdating = true;
             ActionMessage = "Update Product";
         }
-}
+        await SpinnerService.HideSpinnerAsync();
+    }
 
     private async Task OnFileChange(InputFileChangeEventArgs e)
     {
         try
         {
+            await SpinnerService.ShowSpinnerAsync();
             var file = e.File;
             if (file != null)
             {
@@ -146,11 +151,16 @@
         {
             Console.WriteLine($"Error: {ex.Message}");
         }
+        finally
+        {
+            await SpinnerService.HideSpinnerAsync();
+        }
     }
 
 
     private async Task HandleValidSubmit()
     {
+        await SpinnerService.ShowSpinnerAsync();
         var productDto = new ProductCreateUpdateDto
             {
                 Id = ProductId,
@@ -170,6 +180,7 @@
             await ProductService.UpdateProductAsync(productDto);
         }
         NavigateBack();
+        await SpinnerService.HideSpinnerAsync();
     }
 
 
