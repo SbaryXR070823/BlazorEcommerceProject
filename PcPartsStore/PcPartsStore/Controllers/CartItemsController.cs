@@ -55,9 +55,10 @@ public class CartItemsController : ControllerBase
         return Ok(cartItem);
     }
 
-    [HttpGet("user/{userId}")]
-    public async Task<IActionResult> GetCartItemsByUserId(string userId)
+    [HttpGet("user")]
+    public async Task<IActionResult> GetCartItemsByUserId()
     {
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
         var cartItems = await _cartItemsService.GetCartItemsByUserIdAsync(userId);
         return Ok(cartItems);
     }

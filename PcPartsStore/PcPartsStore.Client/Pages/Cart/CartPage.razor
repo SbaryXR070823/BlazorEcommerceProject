@@ -1,0 +1,175 @@
+﻿@page "/cart"
+@using Shared.Dto
+@using Shared.Services
+@using Shared.Models
+@inject ICartItemApiService CartService
+@inject NavigationManager NavigationManager
+@inject SpinnerService SpinnerService
+@rendermode @(new InteractiveWebAssemblyRenderMode(prerender: false))
+
+<div class="container">
+    <h1 class="my-4">Your Shopping Cart</h1>
+
+    @if (CartProducts == null || !CartProducts.Any())
+    {
+        <div class="alert alert-info text-center">
+            <i class="bi bi-cart-x fs-1 mb-3 d-block"></i>
+            <p>Your cart is empty. Continue shopping and add some items!</p>
+            <button class="btn btn-primary mt-3" @onclick="NavigateToProducts">
+                Browse Products
+            </button>
+        </div>
+    }
+    else
+    {
+        <div class="row">
+            <div class="col-md-8">
+                @foreach (var cartItem in CartProducts)
+                {
+                    <div class="card mb-3">
+                        <div class="row g-0">
+                            <div class="col-md-4">
+                                <img src="data:image/jpeg;base64,@cartItem.Product.ImageBase64"
+                                     class="img-fluid rounded-start"
+                                     alt="@cartItem.Product.Name">
+                            </div>
+                            <div class="col-md-8">
+                                <div class="card-body">
+                                    <h5 class="card-title">@cartItem.Product.Name</h5>
+                                    <p class="card-text">
+                                        @{
+                                            bool isExpanded = expandedDescriptions.Contains(cartItem.ProductId);
+                                            string displayDescription = isExpanded || cartItem.Product.Description.Length <= 100
+                                            ? cartItem.Product.Description
+                                            : cartItem.Product.Description.Substring(0, 100) + "...";
+                                        }
+                                        @displayDescription
+                                        @if (cartItem.Product.Description.Length > 100)
+                                        {
+                                            <button class="btn btn-link btn-sm"
+                                                    @onclick="() => ToggleDescription(cartItem.ProductId)">
+                                                @(expandedDescriptions.Contains(cartItem.ProductId) ? "Collapse" : "Expand")
+                                            </button>
+                                        }
+                                    </p>
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <div class="quantity-selector">
+                                            <select class="form-select w-auto"
+                                                    @bind="cartItem.Quantity">
+                                                @for (int i = 1; i <= 10; i++)
+                                                {
+                                                    <option value="@i">@i</option>
+                                                }
+                                            </select>
+                                        </div>
+                                        <div class="price">
+                                            <strong>@cartItem.Product.Price.ToString("C")</strong>
+                                        </div>
+                                        <button class="btn btn-danger btn-sm"
+                                                @onclick="() => RemoveFromCart(cartItem.CartItemId)">
+                                            <i class="bi bi-trash"></i> Remove
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                }
+            </div>
+            <div class="col-md-4">
+                <div class="card">
+                    <div class="card-body">
+                        <h5 class="card-title">Order Summary</h5>
+                        <p class="card-text">
+                            Total Items: @CartProducts.Sum(c => c.Quantity)
+                        </p>
+                        <p class="card-text">
+                            Total Price: @(CartProducts.Sum(c => c.Product.Price * c.Quantity).ToString("C"))
+                        </p>
+                        <button class="btn btn-success w-100" @onclick="Checkout">
+                            Proceed to Checkout
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+</div>
+
+<style>
+    .quantity-selector select {
+        width: 70px;
+    }
+
+    .card-body > .row {
+        align-items: center;
+    }
+
+    .img-fluid {
+        max-height: 200px;
+        object-fit: cover;
+    }
+</style>
+
+@code {
+    public decimal TotalPrice { get; set; }
+    public List<CartProductsDto> CartProducts { get; set; } = new List<CartProductsDto>();
+    private HashSet<int> expandedDescriptions = new HashSet<int>();
+
+    protected override async Task OnInitializedAsync()
+    {
+        await SpinnerService.ShowSpinnerAsync();
+        CartProducts = await CartService.GetCartProductsByUserIdAsync();
+        await SpinnerService.HideSpinnerAsync();
+    }
+
+    private void ToggleDescription(int productId)
+    {
+        if (expandedDescriptions.Contains(productId))
+        {
+            expandedDescriptions.Remove(productId);
+        }
+        else
+        {
+            expandedDescriptions.Add(productId);
+        }
+    }
+
+    private async Task UpdateQuantity(CartProductsDto cartItem)
+    {
+        try
+        {
+            //await CartService.UpdateCartItemQuantityAsync(cartItem.CartItemId, cartItem.Quantity);
+        }
+        catch (Exception ex)
+        {
+            // TODO: Add error handling, potentially show a toast or error message
+            Console.WriteLine($"Error updating quantity: {ex.Message}");
+        }
+    }
+
+    private async Task RemoveFromCart(int cartItemId)
+    {
+        try
+        {
+            //await CartService.RemoveCartItemAsync(cartItemId);
+            CartProducts.RemoveAll(c => c.CartItemId == cartItemId);
+        }
+        catch (Exception ex)
+        {
+            // TODO: Add error handling, potentially show a toast or error message
+            Console.WriteLine($"Error removing cart item: {ex.Message}");
+        }
+    }
+
+    private void Checkout()
+    {
+        // TODO: Implement checkout navigation or process
+        NavigationManager.NavigateTo("/checkout");
+    }
+
+    private void NavigateToProducts()
+    {
+        NavigationManager.NavigateTo("/products");
+    }
+}

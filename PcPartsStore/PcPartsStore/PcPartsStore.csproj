@@ -8,6 +8,10 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <None Include="..\PcPartsStore.Client\Pages\Cart\Component.razor" Link="Component.razor" />
+  </ItemGroup>
+
+  <ItemGroup>
     <ProjectReference Include="..\..\Shared\Shared.csproj" />
     <ProjectReference Include="..\PcPartsStore.Client\PcPartsStore.Client.csproj" />
     <PackageReference Include="LinqKit" Version="1.3.8" />

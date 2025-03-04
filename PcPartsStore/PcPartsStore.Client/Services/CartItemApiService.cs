@@ -1,4 +1,5 @@
 ﻿using PcPartsStore.Client.Services;
+using Shared.Dto;
 using Shared.Models;
 using Shared.Requests;
 using System;
@@ -44,9 +45,28 @@ public class CartItemApiService : ICartItemApiService
         return null;
     }
 
-    public async Task<List<CartItem>> GetCartItemsByUserIdAsync(string userId)
+    public async Task<List<CartProductsDto>> GetCartProductsByUserIdAsync()
     {
-        return await _httpClient.GetFromJsonAsync<List<CartItem>>($"api/cartitems/user/{userId}");
+        List<CartProductsDto> cartProducts = new List<CartProductsDto>();
+        List <CartItem> cartItems = await _httpClient.GetFromJsonAsync<List<CartItem>>($"api/cartitems/user");
+        foreach (var cart in cartItems)
+        {
+            var product = await _httpClient.GetFromJsonAsync<Product>($"api/product/{cart.ProductId}");
+            cartProducts.Add(new CartProductsDto
+            {
+                ProductId = cart.ProductId,
+                Quantity = cart.Quantity,
+                CartItemId = cart.Id,
+                Total = cart.Quantity * product.Price,
+                Product = product
+            });
+        }
+        return cartProducts;
+    }
+
+    public async Task<List<CartItem>> GetCartItemsByUserIdAsync()
+    {
+        return await _httpClient.GetFromJsonAsync<List<CartItem>>($"api/cartitems/user");
     }
 
     public async Task<int> GetCountOfCartItemsAsync()
