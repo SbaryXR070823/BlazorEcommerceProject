@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using PcPartsStore.Services;
 using PcPartsStore.Services.Interfaces;
 using Shared.Models;
+using Shared.Requests;
 using System.Security.Claims;
 
 namespace PcPartsStore.Controllers;
@@ -62,15 +63,21 @@ public class CartItemsController : ControllerBase
     }
 
     [HttpPost]
-    public async Task<IActionResult> AddCartItem([FromBody] CartItem cartItem)
+    public async Task<IActionResult> AddCartItem([FromBody] CartItemRequest cartItem)
     {
         if (cartItem == null)
         {
             return BadRequest("Invalid cart item data.");
         }
-
-        await _cartItemsService.AddCartItemAsync(cartItem);
-        return CreatedAtAction(nameof(GetCartItemById), new { id = cartItem.Id }, cartItem);
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        var newCartItemToAdd = new CartItem
+        {
+            UserId = userId,
+            ProductId = cartItem.ProductId,
+            Quantity = cartItem.Quantity
+        };
+        await _cartItemsService.AddCartItemAsync(newCartItemToAdd);
+        return CreatedAtAction(nameof(GetCartItemById), new { id = newCartItemToAdd.Id }, newCartItemToAdd);
     }
 
     [HttpPut("{id}")]

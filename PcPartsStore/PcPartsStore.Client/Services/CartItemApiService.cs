@@ -1,5 +1,6 @@
 ﻿using PcPartsStore.Client.Services;
 using Shared.Models;
+using Shared.Requests;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -38,7 +39,7 @@ public class CartItemApiService : ICartItemApiService
         return await _httpClient.GetFromJsonAsync<int>($"api/CartItems/count");
     }
 
-    public async Task AddCartItemAsync(CartItem cartItem)
+    public async Task AddCartItemAsync(CartItemRequest cartItem)
     {
         await _httpClient.PostAsJsonAsync("api/cartitems", cartItem);
     }

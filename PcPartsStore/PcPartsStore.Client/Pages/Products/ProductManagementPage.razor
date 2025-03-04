@@ -2,6 +2,7 @@
 @using PcPartsStore.Client.Services
 @using Shared.Dto
 @using Shared.Models
+@using Shared.Requests
 @using Shared.Services
 @inject NavigationManager Navigation
 @inject IUserApiService UserService
@@ -14,6 +15,16 @@
 <PageTitle>Manage Products</PageTitle>
 
 <div class="container mt-4">
+    @if (!isAdmin)
+    {
+        <div class="floating-cart" @onclick="GoToCart">
+            <i class="bi bi-cart-fill"></i>
+            @if (currentCountOfCartItems > 0)
+            {
+                <span class="cart-badge">@currentCountOfCartItems</span>
+            }
+        </div>
+    }
     <div class="d-flex justify-content-between align-items-center mb-4">
         <h3>Product Management</h3>
         @if (isAdmin)
@@ -79,7 +90,7 @@
                 <div class="d-flex flex-row flex-wrap gap-3">
                     @foreach (var product in categoryGroup)
                     {
-                        <div class="card h-100 shadow-sm hover-shadow product-card">
+                        <div class="card h-100 shadow-sm hover-shadow product-card" style="max-width: 400px">
                             <div class="product-image-container text-center p-3" style="height: 200px; overflow: hidden;">
                                 @if (!string.IsNullOrEmpty(product.ImageBase64))
                                 {
@@ -187,14 +198,69 @@
         }
         await SpinnerService.HideSpinnerAsync();
     }
-
-    private async Task ApplyFilters() => products = await ProductService.GetProductsAsync(filters);
+    private void GoToCart()
+    {
+        //Navigation.NavigateTo("/cart");
+    }
+    private async Task ApplyFilters() { await SpinnerService.ShowSpinnerAsync(); products = await ProductService.GetProductsAsync(filters); await SpinnerService.HideSpinnerAsync(); }
     private void EditProduct(int productId) => Navigation.NavigateTo($"/product/edit/{productId}");
     private void AddNewProduct() => Navigation.NavigateTo("/product/edit/0");
-    private void ViewProduct(int productId) { /* Future implementation */ }
-    private void AddToCart(int productId) { /* Future implementation */ }
+    private void ViewProduct(int productId) { }
+    private async Task AddToCart(int productId)
+    {
+        await SpinnerService.ShowSpinnerAsync();
+        //await CartService.GetCartAsync();
+        var newCartItem = new CartItemRequest
+            {
+                ProductId = productId,
+                Quantity = 1,
+            };
+        await CartService.AddCartItemAsync(newCartItem);
+        await SpinnerService.HideSpinnerAsync();
+    }
     private void ConfirmDelete(int productId) { productIdToDelete = productId; showDeleteModal = true; }
     private void CloseDeleteModal() => showDeleteModal = false;
     private async Task DeleteProduct() { await SpinnerService.ShowSpinnerAsync(); await ProductService.DeleteProductAsync(productIdToDelete); products = await ProductService.GetProductsAsync(filters); showDeleteModal = false; await SpinnerService.HideSpinnerAsync(); }
     private async Task ClearFilters() { await SpinnerService.ShowSpinnerAsync(); filters = new ProductFilters(); products = await ProductService.GetProductsAsync(filters); await SpinnerService.HideSpinnerAsync(); }
 }
+
+<style>
+    .floating-cart {
+        position: fixed;
+        bottom: 20px;
+        right: 20px;
+        width: 60px;
+        height: 60px;
+        background-color: #28a745;
+        color: white;
+        border-radius: 50%;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        font-size: 1.5rem;
+        box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
+        cursor: pointer;
+        z-index: 1000;
+    }
+
+        .floating-cart:hover {
+            background-color: #218838;
+        }
+
+    .cart-badge {
+        position: absolute;
+        top: 10px;
+        right: 10px;
+        background: red;
+        color: white;
+        font-size: 0.9rem;
+        font-weight: bold;
+        width: 22px;
+        height: 22px;
+        border-radius: 50%;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+    }
+
+</style>

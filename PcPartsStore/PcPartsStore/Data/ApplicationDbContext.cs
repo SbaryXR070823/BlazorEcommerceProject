@@ -13,7 +13,6 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
     public DbSet<CartItem> CartItems { get; set; }
     public DbSet<Order> Orders { get; set; }
     public DbSet<OrderItem> OrderItems { get; set; }
-    public DbSet<ApplicationUser> Users { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

@@ -43,6 +43,11 @@ public class CartItemsService : ICartItemsService
         return (await _unitOfWork.CartItems.FindAsync(c => c.UserId == userId)).ToList();
     }
 
+    public async Task<CartItem?> GetCartItemByProductIdForUser(int productId, string userId)
+    {
+        return (await _unitOfWork.CartItems.FindAsync(x => x.UserId == userId && x.ProductId == productId)).FirstOrDefault();
+    }
+
     public async Task<int> GetCountOfCartITems(string userId)
     {
         return (await _unitOfWork.CartItems.FindAsync(c => c.UserId == userId)).Count();

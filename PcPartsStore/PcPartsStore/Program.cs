@@ -14,6 +14,7 @@ using PcPartsStore.Client.Services;
 using Microsoft.AspNetCore.Http.Features;
 using Shared.Services;
 using Blazored.LocalStorage;
+using Microsoft.Extensions.Options;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -40,9 +41,22 @@ builder.Services.AddTransient<ICartItemsService, CartItemsService>();
 builder.Services.AddScoped<SpinnerService>();
 builder.Services.AddBlazoredLocalStorage();
 builder.Services.AddScoped<LocalStorageService>();
+builder.Services.AddSignalR(options =>
+{
+    options.ClientTimeoutInterval = TimeSpan.FromSeconds(60 * 5);
+    options.KeepAliveInterval = TimeSpan.FromSeconds(15);
+});
+
+builder.Services.AddServerSideBlazor(options =>
+{
+   
+});
 //builder.Services.AddHttpClient();
 
-builder.Services.AddServerSideBlazor()
+builder.Services.AddServerSideBlazor(options =>
+{
+    options.DisconnectedCircuitRetentionPeriod = TimeSpan.FromMinutes(10);
+})
     .AddHubOptions(options =>
     {
         options.MaximumReceiveMessageSize = 20 * 1024 * 1024 * 100;
