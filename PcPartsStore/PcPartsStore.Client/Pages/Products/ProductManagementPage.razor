@@ -95,7 +95,7 @@
                                 @if (!string.IsNullOrEmpty(product.ImageBase64))
                                 {
                                     <img src="data:image/png;base64,@product.ImageBase64" class="product-image"
-                                    alt="@product.Name" style="max-height: 180px; max-width: 100%; object-fit: contain;" />
+                                         alt="@product.Name" style="max-height: 180px; max-width: 100%; object-fit: contain;" />
                                 }
                                 else
                                 {
@@ -209,13 +209,26 @@
     private async Task AddToCart(int productId)
     {
         await SpinnerService.ShowSpinnerAsync();
-        //await CartService.GetCartAsync();
-        var newCartItem = new CartItemRequest
-            {
-                ProductId = productId,
-                Quantity = 1,
-            };
-        await CartService.AddCartItemAsync(newCartItem);
+        var existingCartItem = await CartService.GetCartItemByProductIdForUser(productId);
+        if (existingCartItem != null)
+        {
+            await CartService.UpdateCartItemAsync(new CartItemRequest
+                {
+                    ProductId = existingCartItem.ProductId,
+                    Quantity = existingCartItem.Quantity + 1,
+                }, existingCartItem.Id);
+        }
+        else
+        {
+            var newCartItem = new CartItemRequest
+                {
+                    ProductId = productId,
+                    Quantity = 1,
+                };
+            await CartService.AddCartItemAsync(newCartItem);
+            currentCountOfCartItems = await CartService.GetCountOfCartItemsAsync();
+        }
+
         await SpinnerService.HideSpinnerAsync();
     }
     private void ConfirmDelete(int productId) { productIdToDelete = productId; showDeleteModal = true; }

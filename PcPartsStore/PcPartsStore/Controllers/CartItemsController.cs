@@ -81,9 +81,9 @@ public class CartItemsController : ControllerBase
     }
 
     [HttpPut("{id}")]
-    public async Task<IActionResult> UpdateCartItem(int id, [FromBody] CartItem cartItem)
+    public async Task<IActionResult> UpdateCartItem(int id, [FromBody] CartItemRequest cartItem)
     {
-        if (cartItem == null || id != cartItem.Id)
+        if (cartItem == null)
         {
             return BadRequest("Invalid cart item data.");
         }
@@ -94,7 +94,10 @@ public class CartItemsController : ControllerBase
             return NotFound();
         }
 
-        await _cartItemsService.UpdateCartItemAsync(cartItem);
+        existingCartItem.ProductId = cartItem.ProductId;
+        existingCartItem.Quantity = cartItem.Quantity;
+
+        await _cartItemsService.UpdateCartItemAsync(existingCartItem);
         return NoContent();
     }
 
@@ -109,5 +112,13 @@ public class CartItemsController : ControllerBase
 
         await _cartItemsService.DeleteCartItemAsync(id);
         return NoContent();
+    }
+
+    [HttpGet("get/{productId}")]
+    public async Task<IActionResult> GetCartItemByProductIdForUser(int productId)
+    {
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        var cartItem = await _cartItemsService.GetCartItemByProductIdForUser(productId, userId);
+        return Ok(cartItem);
     }
 }

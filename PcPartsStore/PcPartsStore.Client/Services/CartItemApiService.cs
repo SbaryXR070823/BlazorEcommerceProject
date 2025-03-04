@@ -29,6 +29,21 @@ public class CartItemApiService : ICartItemApiService
         return await _httpClient.GetFromJsonAsync<CartItem>($"api/cartitems/{id}");
     }
 
+    public async Task<CartItem?> GetCartItemByProductIdForUser(int productId)
+    {
+        var response = await _httpClient.GetAsync($"api/cartitems/get/{productId}");
+
+        if (response.IsSuccessStatusCode)
+        {
+            if (response.Content.Headers.ContentLength == 0)
+                return null;
+
+            return await response.Content.ReadFromJsonAsync<CartItem?>();
+        }
+
+        return null;
+    }
+
     public async Task<List<CartItem>> GetCartItemsByUserIdAsync(string userId)
     {
         return await _httpClient.GetFromJsonAsync<List<CartItem>>($"api/cartitems/user/{userId}");
@@ -44,9 +59,9 @@ public class CartItemApiService : ICartItemApiService
         await _httpClient.PostAsJsonAsync("api/cartitems", cartItem);
     }
 
-    public async Task UpdateCartItemAsync(CartItem cartItem)
+    public async Task UpdateCartItemAsync(CartItemRequest cartItem, int id)
     {
-        await _httpClient.PutAsJsonAsync($"api/cartitems/{cartItem.Id}", cartItem);
+        await _httpClient.PutAsJsonAsync($"api/cartitems/{id}", cartItem);
     }
 
     public async Task DeleteCartItemAsync(int id)

@@ -9,7 +9,8 @@ namespace PcPartsStore.Client.Services
         Task<CartItem> GetCartItemByIdAsync(int id);
         Task<List<CartItem>> GetCartItemsByUserIdAsync(string userId);
         Task AddCartItemAsync(CartItemRequest cartItem);
-        Task UpdateCartItemAsync(CartItem cartItem);
+        Task<CartItem> GetCartItemByProductIdForUser(int productId);
+        Task UpdateCartItemAsync(CartItemRequest cartItem, int id);
         Task DeleteCartItemAsync(int id);
         Task<int> GetCountOfCartItemsAsync();
 
