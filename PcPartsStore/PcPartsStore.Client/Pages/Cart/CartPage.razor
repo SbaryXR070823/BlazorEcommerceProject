@@ -55,7 +55,9 @@
                                     <div class="d-flex justify-content-between align-items-center">
                                         <div class="quantity-selector">
                                             <select class="form-select w-auto"
-                                                    @bind="cartItem.Quantity">
+                                                    @bind="cartItem.Quantity"
+                                                    @bind:event="onchange"
+                                                    @bind:after="async () => await UpdateQuantity(cartItem)">
                                                 @for (int i = 1; i <= 10; i++)
                                                 {
                                                     <option value="@i">@i</option>
@@ -86,7 +88,7 @@
                         <p class="card-text">
                             Total Price: @(CartProducts.Sum(c => c.Product.Price * c.Quantity).ToString("C"))
                         </p>
-                        <button class="btn btn-success w-100" @onclick="Checkout">
+                        <button class="btn btn-success w-100" @onclick="ConfirmCheckout">
                             Proceed to Checkout
                         </button>
                     </div>
@@ -95,6 +97,27 @@
         </div>
     }
 </div>
+
+@if (showConfirmationDialog)
+{
+    <div class="modal fade show d-block" tabindex="-1" role="dialog" style="background: rgba(0, 0, 0, 0.5);">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Confirm Checkout</h5>
+                    <button type="button" class="btn-close" @onclick="CancelCheckout"></button>
+                </div>
+                <div class="modal-body">
+                    <p>Are you sure you want to proceed with the checkout?</p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" @onclick="CancelCheckout">Cancel</button>
+                    <button type="button" class="btn btn-primary" @onclick="async () => await ProceedToCheckout()">Yes, Proceed</button>
+                </div>
+            </div>
+        </div>
+    </div>
+}
 
 <style>
     .quantity-selector select {
@@ -115,6 +138,7 @@
     public decimal TotalPrice { get; set; }
     public List<CartProductsDto> CartProducts { get; set; } = new List<CartProductsDto>();
     private HashSet<int> expandedDescriptions = new HashSet<int>();
+    private bool showConfirmationDialog = false;
 
     protected override async Task OnInitializedAsync()
     {
@@ -139,11 +163,15 @@
     {
         try
         {
-            //await CartService.UpdateCartItemQuantityAsync(cartItem.CartItemId, cartItem.Quantity);
+            await CartService.UpdateCartItemAsync(new Shared.Requests.CartItemRequest
+                {
+                    ProductId = cartItem.ProductId,
+                    Quantity = cartItem.Quantity
+
+                }, cartItem.CartItemId);
         }
         catch (Exception ex)
         {
-            // TODO: Add error handling, potentially show a toast or error message
             Console.WriteLine($"Error updating quantity: {ex.Message}");
         }
     }
@@ -152,20 +180,34 @@
     {
         try
         {
-            //await CartService.RemoveCartItemAsync(cartItemId);
+            await CartService.DeleteCartItemAsync(cartItemId);
             CartProducts.RemoveAll(c => c.CartItemId == cartItemId);
         }
         catch (Exception ex)
         {
-            // TODO: Add error handling, potentially show a toast or error message
             Console.WriteLine($"Error removing cart item: {ex.Message}");
         }
     }
 
-    private void Checkout()
+    private void ConfirmCheckout()
     {
-        // TODO: Implement checkout navigation or process
-        NavigationManager.NavigateTo("/checkout");
+        showConfirmationDialog = true;
+    }
+
+    private void CancelCheckout()
+    {
+        showConfirmationDialog = false;
+    }
+
+    private async Task ProceedToCheckout()
+    {
+        await SpinnerService.ShowSpinnerAsync();
+        foreach (var cartItem in CartProducts)
+        {
+            await CartService.DeleteCartItemAsync(cartItem.CartItemId);
+        }
+        await SpinnerService.HideSpinnerAsync();
+        NavigationManager.NavigateTo("/products");
     }
 
     private void NavigateToProducts()
