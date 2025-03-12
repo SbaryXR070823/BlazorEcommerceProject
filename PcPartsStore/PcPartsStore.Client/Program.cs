@@ -15,6 +15,7 @@ builder.Services.AddScoped(sp => new HttpClient
 builder.Services.AddTransient<IProductApiService, ProductApiService>();
 builder.Services.AddTransient<ICategoryApiService, CategoryApiService>();
 builder.Services.AddTransient<IUserApiService, UserApiService>();
+builder.Services.AddTransient<ISpecificationApiService, SpecificationApiService>();
 builder.Services.AddTransient<ICartItemApiService, CartItemApiService>();
 builder.Services.AddScoped<SpinnerService>();
 builder.Services.AddAuthorizationCore();

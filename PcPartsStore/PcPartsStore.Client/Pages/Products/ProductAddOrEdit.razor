@@ -4,6 +4,7 @@
 @using PcPartsStore
 @using Shared.Dto
 @using Shared.Models
+@using Shared.Requests
 @using Shared.Services
 @inject IProductApiService ProductService
 @inject NavigationManager Navigation
@@ -11,47 +12,109 @@
 @inject HttpClient HttpClient
 @inject SpinnerService SpinnerService
 @inject ICategoryApiService CategoryService
+@inject ICartItemApiService CartService
+@inject IUserApiService UserService
 @rendermode @(new InteractiveWebAssemblyRenderMode(prerender: false))
 
-<PageTitle>@(ProductId == 0 ? "Add Product" : "Edit Product")</PageTitle>
+<PageTitle>@(ProductId == 0 ? "Add Product" : (isAdmin ? "Edit Product" : "View Product"))</PageTitle>
 <script src="scripts/resizing.js"></script>
 <div class="container mt-4">
     <div class="card shadow">
         <div class="card-header bg-primary text-white">
-            <h3 class="m-0">@(ProductId == 0 ? "Add Product" : "Edit Product")</h3>
+            <h3 class="m-0">@(ProductId == 0 ? "Add Product" : (isAdmin ? "Edit Product" : "View Product"))</h3>
         </div>
         <div class="card-body">
-            <EditForm Model="@product" OnValidSubmit="HandleValidSubmit">
-                <DataAnnotationsValidator />
-                <ValidationSummary />
+            @if (isAdmin)
+            {
+                <EditForm Model="@product" OnValidSubmit="HandleValidSubmit">
+                    <DataAnnotationsValidator />
+                    <ValidationSummary />
 
+                    <div class="row mb-4">
+                        <div class="col-md-8">
+                            <div class="form-group mb-3">
+                                <label for="name" class="form-label">Product Name</label>
+                                <InputText id="name" @bind-Value="product.Name" class="form-control" />
+                            </div>
+                            <div class="form-group mb-3">
+                                <label for="description" class="form-label">Description</label>
+                                <InputTextArea id="description" @bind-Value="product.Description" class="form-control" rows="4" />
+                            </div>
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="form-group mb-3">
+                                        <label for="price" class="form-label">Price ($)</label>
+                                        <InputNumber id="price" @bind-Value="product.Price" class="form-control" />
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="form-group mb-3">
+                                        <label for="category" class="form-label">Category</label>
+                                        <select id="category" @bind="@categoryId" class="form-select">
+                                            <option value="0">Select Category</option>
+                                            @foreach (var category in categories)
+                                            {
+                                                <option value="@category.Key">@category.Value</option>
+                                            }
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="form-group mb-3">
+                                <label class="form-label d-block">Product Image</label>
+                                <div class="image-preview-container mb-3 d-flex justify-content-center align-items-center border rounded p-2" style="height: 200px;">
+                                    @if (!string.IsNullOrEmpty(product.ImageBase64))
+                                    {
+                                        <img src="data:image/png;base64,@product.ImageBase64" alt="@product.Name" class="product-image" style="max-height: 180px; max-width: 100%;" />
+                                    }
+                                    else
+                                    {
+                                        <span class="text-muted">No image selected</span>
+                                    }
+                                </div>
+                                <InputFile OnChange="@(async e => await OnFileChange(e))" class="form-control" accept="image/*" />
+                                <small class="text-muted">Max file size: 16MB. Supported formats: JPG, PNG</small>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="d-flex justify-content-between">
+                        <button type="button" class="btn btn-outline-secondary" @onclick="NavigateBack">
+                            <i class="bi bi-arrow-left"></i> Back
+                        </button>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="bi bi-save"></i>
+                            @ActionMessage
+                        </button>
+                    </div>
+                </EditForm>
+            }
+            else
+            {
+                <!-- Read-only view for users -->
                 <div class="row mb-4">
                     <div class="col-md-8">
                         <div class="form-group mb-3">
-                            <label for="name" class="form-label">Product Name</label>
-                            <InputText id="name" @bind-Value="product.Name" class="form-control" />
+                            <label class="form-label">Product Name</label>
+                            <p class="form-control-static">@product.Name</p>
                         </div>
                         <div class="form-group mb-3">
-                            <label for="description" class="form-label">Description</label>
-                            <InputTextArea id="description" @bind-Value="product.Description" class="form-control" rows="4" />
+                            <label class="form-label">Description</label>
+                            <p class="form-control-static">@product.Description</p>
                         </div>
                         <div class="row">
                             <div class="col-md-6">
                                 <div class="form-group mb-3">
-                                    <label for="price" class="form-label">Price ($)</label>
-                                    <InputNumber id="price" @bind-Value="product.Price" class="form-control" />
+                                    <label class="form-label">Price ($)</label>
+                                    <p class="form-control-static">@product.Price.ToString("0.00")</p>
                                 </div>
                             </div>
                             <div class="col-md-6">
                                 <div class="form-group mb-3">
-                                    <label for="category" class="form-label">Category</label>
-                                    <select id="category" @bind="@categoryId" class="form-select">
-                                        <option value="0">Select Category</option>
-                                        @foreach (var category in categories)
-                                        {
-                                            <option value="@category.Key">@category.Value</option>
-                                        }
-                                    </select>
+                                    <label class="form-label">Category</label>
+                                    <p class="form-control-static">@categories.GetValueOrDefault(product.CategoryId)</p>
                                 </div>
                             </div>
                         </div>
@@ -69,8 +132,6 @@
                                     <span class="text-muted">No image selected</span>
                                 }
                             </div>
-                            <InputFile OnChange="@(async e => await OnFileChange(e))" class="form-control" accept="image/*" />
-                            <small class="text-muted">Max file size: 16MB. Supported formats: JPG, PNG</small>
                         </div>
                     </div>
                 </div>
@@ -79,12 +140,11 @@
                     <button type="button" class="btn btn-outline-secondary" @onclick="NavigateBack">
                         <i class="bi bi-arrow-left"></i> Back
                     </button>
-                    <button type="submit" class="btn btn-primary">
-                        <i class="bi bi-save"></i> 
-                        @ActionMessage
+                    <button type="button" class="btn btn-success" @onclick="AddToCart">
+                        <i class="bi bi-cart-plus"></i> Add to Cart
                     </button>
                 </div>
-            </EditForm>
+            }
         </div>
     </div>
 </div>
@@ -97,6 +157,8 @@
     private const int MaxFileSizeBytes = 16 * 1024 * 1024;
     private bool IsUpdating { get; set; } = false;
     private string ActionMessage = "Save Product";
+    private bool isAdmin = false;
+    private List<string> userRoles = new List<string>();
 
     protected override async Task OnInitializedAsync()
     {
@@ -111,6 +173,10 @@
             IsUpdating = true;
             ActionMessage = "Update Product";
         }
+
+        userRoles = await UserService.GetUserRoleAsync();
+        isAdmin = userRoles.Contains("Admin");
+
         await SpinnerService.HideSpinnerAsync();
     }
 
@@ -127,22 +193,22 @@
                 if (file.Size > MaxFileSizeBytes)
                 {
                     Console.WriteLine("File size exceeds the maximum allowed size.");
-                    return; 
+                    return;
                 }
 
-                using (var stream = file.OpenReadStream(MaxFileSizeBytes)) 
+                using (var stream = file.OpenReadStream(MaxFileSizeBytes))
                 using (var memoryStream = new MemoryStream())
                 {
                     await stream.CopyToAsync(memoryStream);
                     var buffer = memoryStream.ToArray();
-                    var base64String = Convert.ToBase64String(buffer); 
+                    var base64String = Convert.ToBase64String(buffer);
 
                     var resizedBase64 = await JSRuntime.InvokeAsync<string>("resizeImage", base64String);
 
                     if (!string.IsNullOrEmpty(resizedBase64))
                     {
                         product.ImageBase64 = resizedBase64;
-                        StateHasChanged(); 
+                        StateHasChanged();
                     }
                 }
             }
@@ -157,19 +223,18 @@
         }
     }
 
-
     private async Task HandleValidSubmit()
     {
         await SpinnerService.ShowSpinnerAsync();
         var productDto = new ProductCreateUpdateDto
-            {
-                Id = ProductId,
-                Name = product.Name,
-                Description = product.Description,
-                Price = product.Price,
-                CategoryId = categoryId,
-                ImageBase64 = product.ImageBase64
-            };
+        {
+            Id = ProductId,
+            Name = product.Name,
+            Description = product.Description,
+            Price = product.Price,
+            CategoryId = categoryId,
+            ImageBase64 = product.ImageBase64
+        };
 
         if (ProductId == 0)
         {
@@ -183,9 +248,32 @@
         await SpinnerService.HideSpinnerAsync();
     }
 
-
     private void NavigateBack()
     {
         Navigation.NavigateTo("/products");
+    }
+
+    private async Task AddToCart()
+    {
+        await SpinnerService.ShowSpinnerAsync();
+        var existingCartItem = await CartService.GetCartItemByProductIdForUser(ProductId);
+        if (existingCartItem != null)
+        {
+            await CartService.UpdateCartItemAsync(new CartItemRequest
+            {
+                ProductId = existingCartItem.ProductId,
+                Quantity = existingCartItem.Quantity + 1,
+            }, existingCartItem.Id);
+        }
+        else
+        {
+            var newCartItem = new CartItemRequest
+            {
+                ProductId = ProductId,
+                Quantity = 1,
+            };
+            await CartService.AddCartItemAsync(newCartItem);
+        }
+        await SpinnerService.HideSpinnerAsync();
     }
 }

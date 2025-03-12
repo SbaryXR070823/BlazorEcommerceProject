@@ -186,7 +186,7 @@
         categories = await CategoryService.GetCategoriesAsync();
         products = await ProductService.GetProductsAsync(filters);
         userRoles = await UserService.GetUserRoleAsync();
-        if (userRoles == null || !userRoles.Any())
+        if (userRoles == null || !userRoles.Any() || userRoles.Contains("User"))
         {
             isAdmin = false;
             currentCountOfCartItems = await CartService.GetCountOfCartItemsAsync();
@@ -205,7 +205,7 @@
     private async Task ApplyFilters() { await SpinnerService.ShowSpinnerAsync(); products = await ProductService.GetProductsAsync(filters); await SpinnerService.HideSpinnerAsync(); }
     private void EditProduct(int productId) => Navigation.NavigateTo($"/product/edit/{productId}");
     private void AddNewProduct() => Navigation.NavigateTo("/product/edit/0");
-    private void ViewProduct(int productId) { }
+    private void ViewProduct(int productId) => Navigation.NavigateTo($"/product/edit/{productId}");
     private async Task AddToCart(int productId)
     {
         await SpinnerService.ShowSpinnerAsync();
