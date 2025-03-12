@@ -4,17 +4,19 @@
 @using Shared.Models
 @using Shared.Requests
 @using Shared.Services
+@using System.Timers
+@implements IDisposable
 @inject NavigationManager Navigation
 @inject IUserApiService UserService
 @inject IProductApiService ProductService
 @inject ICategoryApiService CategoryService
 @inject SpinnerService SpinnerService
 @inject ICartItemApiService CartService
+@inject LocalStorageService LocalStorageService
 @rendermode @(new InteractiveWebAssemblyRenderMode(prerender: false))
 
 <PageTitle>Manage Products</PageTitle>
-
-<div class="container mt-4">
+<div class="container mt-4" @onclick="HandlePageClick">
     @if (!isAdmin)
     {
         <div class="floating-cart" @onclick="GoToCart">
@@ -41,10 +43,22 @@
         </div>
         <div class="card-body">
             <div class="row g-3">
-                <div class="col-md-3">
+                <div class="col-md-3 search-container" @onclick:stopPropagation>
                     <label class="form-label">Product Name</label>
-                    <input type="text" @bind="filters.Name" placeholder="Search by name" class="form-control" />
+                    <input type="text" @oninput="HandleSearchInput" @bind="filters.Name" placeholder="Search by name" class="form-control search-input" />
+                    @if (showSuggestions && searchSuggestions.Any())
+                    {
+                        <div class="suggestions-dropdown">
+                            @foreach (var suggestion in searchSuggestions)
+                            {
+                                <div class="suggestion-item" @onclick="() => SelectSuggestion(suggestion)">
+                                    @suggestion
+                                </div>
+                            }
+                        </div>
+                    }
                 </div>
+                <!-- Rest of the form fields unchanged -->
                 <div class="col-md-3">
                     <label class="form-label">Category</label>
                     <select @bind="filters.Category" class="form-select">
@@ -76,7 +90,6 @@
             </div>
         </div>
     </div>
-
     @if (products != null && products.Count > 0)
     {
         var groupedProducts = products.GroupBy(p => p.CategoryId);
@@ -95,7 +108,7 @@
                                 @if (!string.IsNullOrEmpty(product.ImageBase64))
                                 {
                                     <img src="data:image/png;base64,@product.ImageBase64" class="product-image"
-                                    alt="@product.Name" style="max-height: 180px; max-width: 100%; object-fit: contain;" />
+                                         alt="@product.Name" style="max-height: 180px; max-width: 100%; object-fit: contain;" />
                                 }
                                 else
                                 {
@@ -179,6 +192,13 @@
     private UserInfoDto userData = new UserInfoDto();
     private int currentCountOfCartItems = 0;
 
+    private string searchInput;
+    private bool showSuggestions = false;
+    private List<string> searchSuggestions = new List<string>();
+    private const string SearchHistoryKey = "ProductSearchHistory";
+    private System.Timers.Timer _debounceTimer;
+    private bool _documentClickAdded = false;
+
     protected override async Task OnInitializedAsync()
     {
         await SpinnerService.ShowSpinnerAsync();
@@ -194,15 +214,97 @@
         else
         {
             isAdmin = userRoles.Contains("Admin");
-
         }
+
+        _debounceTimer = new System.Timers.Timer(300);
+        _debounceTimer.Elapsed += OnDebounceElapsed;
+        _debounceTimer.AutoReset = false;
+
         await SpinnerService.HideSpinnerAsync();
     }
+    
+    private void HandlePageClick()
+    {
+        if (showSuggestions)
+        {
+            showSuggestions = false;
+            StateHasChanged();
+        }
+    }
+
     private void GoToCart()
     {
         Navigation.NavigateTo("/cart");
     }
-    private async Task ApplyFilters() { await SpinnerService.ShowSpinnerAsync(); products = await ProductService.GetProductsAsync(filters); await SpinnerService.HideSpinnerAsync(); }
+
+    private async Task ApplyFilters()
+    {
+        await SpinnerService.ShowSpinnerAsync();
+        products = await ProductService.GetProductsAsync(filters);
+
+        if (!string.IsNullOrEmpty(filters.Name))
+        {
+            await SaveSearchTerm(filters.Name);
+        }
+
+        await SpinnerService.HideSpinnerAsync();
+    }
+
+    private async Task SaveSearchTerm(string term)
+    {
+        var searchHistory = await LocalStorageService.GetItemAsync<List<SearchHistoryItem>>(SearchHistoryKey) ?? new List<SearchHistoryItem>();
+        var existingItem = searchHistory.FirstOrDefault(s => s.Term.Equals(term, StringComparison.OrdinalIgnoreCase));
+
+        if (existingItem != null)
+        {
+            existingItem.Timestamp = DateTime.UtcNow;
+        }
+        else
+        {
+            searchHistory.Add(new SearchHistoryItem { Term = term, Timestamp = DateTime.UtcNow });
+        }
+
+        await LocalStorageService.SaveItemAsync(SearchHistoryKey, searchHistory);
+    }
+
+    private void HandleSearchInput(ChangeEventArgs e)
+    {
+        searchInput = e.Value?.ToString();
+
+        _debounceTimer.Stop();
+        _debounceTimer.Start();
+    }
+
+    private async void OnDebounceElapsed(object sender, ElapsedEventArgs e)
+    {
+        await InvokeAsync(async () =>
+        {
+            filters.Name = searchInput;
+            if (!string.IsNullOrEmpty(filters.Name))
+            {
+                var searchHistory = await LocalStorageService.GetItemAsync<List<SearchHistoryItem>>(SearchHistoryKey) ?? new List<SearchHistoryItem>();
+                searchSuggestions = searchHistory
+                    .Where(s => s.Term.Contains(filters.Name, StringComparison.OrdinalIgnoreCase))
+                    .OrderByDescending(s => s.Timestamp)
+                    .Select(s => s.Term)
+                    .Take(5)
+                    .ToList();
+                showSuggestions = searchSuggestions.Any();
+            }
+            else
+            {
+                showSuggestions = false;
+            }
+            StateHasChanged();
+        });
+    }
+
+    private void SelectSuggestion(string suggestion)
+    {
+        filters.Name = suggestion;
+        showSuggestions = false;
+    }
+
     private void EditProduct(int productId) => Navigation.NavigateTo($"/product/edit/{productId}");
     private void AddNewProduct() => Navigation.NavigateTo("/product/edit/0");
     private void ViewProduct(int productId) => Navigation.NavigateTo($"/product/edit/{productId}");
@@ -213,24 +315,30 @@
         if (existingCartItem != null)
         {
             await CartService.UpdateCartItemAsync(new CartItemRequest
-                {
-                    ProductId = existingCartItem.ProductId,
-                    Quantity = existingCartItem.Quantity + 1,
-                }, existingCartItem.Id);
+            {
+                ProductId = existingCartItem.ProductId,
+                Quantity = existingCartItem.Quantity + 1,
+            }, existingCartItem.Id);
         }
         else
         {
             var newCartItem = new CartItemRequest
-                {
-                    ProductId = productId,
-                    Quantity = 1,
-                };
+            {
+                ProductId = productId,
+                Quantity = 1,
+            };
             await CartService.AddCartItemAsync(newCartItem);
             currentCountOfCartItems = await CartService.GetCountOfCartItemsAsync();
         }
 
         await SpinnerService.HideSpinnerAsync();
     }
+
+    public void Dispose()
+    {
+        _debounceTimer?.Dispose();
+    }
+
 
     private void ConfirmDelete(int productId) { productIdToDelete = productId; showDeleteModal = true; }
     private void CloseDeleteModal() => showDeleteModal = false;
@@ -239,6 +347,10 @@
 }
 
 <style>
+    .search-container {
+        position: relative;
+    }
+
     .floating-cart {
         position: fixed;
         bottom: 20px;
@@ -277,4 +389,24 @@
         align-items: center;
     }
 
+    .suggestions-dropdown {
+        position: absolute;
+        background: white;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        z-index: 1000;
+        width: 100%;
+        max-height: 200px;
+        overflow-y: auto;
+    }
+
+    .suggestion-item {
+        padding: 8px 12px;
+        cursor: pointer;
+    }
+
+        .suggestion-item:hover {
+            background-color: #f8f9fa;
+        }
 </style>
