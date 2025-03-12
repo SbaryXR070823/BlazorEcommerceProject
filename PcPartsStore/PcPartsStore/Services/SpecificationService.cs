@@ -39,5 +39,10 @@ namespace PcPartsStore.Services
         {
             await _unitOfWork.Specifications.DeleteAsync(id);
         }
+
+        public async Task<List<Specification>> GetSpecificationsByProductIdAsync(int productId)
+        {
+            return (await _unitOfWork.Specifications.FindAsync(s => s.ProductId == productId)).ToList();
+        }
     }
 }

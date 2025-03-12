@@ -11,5 +11,6 @@ namespace PcPartsStore.Services.Interfaces
         Task AddSpecificationAsync(Specification specification);
         Task UpdateSpecificationAsync(Specification specification);
         Task DeleteSpecificationAsync(int id);
+        Task<List<Specification>> GetSpecificationsByProductIdAsync(int productId);
     }
 }

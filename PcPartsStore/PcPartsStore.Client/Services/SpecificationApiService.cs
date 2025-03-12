@@ -39,5 +39,25 @@ namespace PcPartsStore.Client.Services
         {
             await _httpClient.DeleteAsync($"api/specification/{id}");
         }
+
+        public async Task<List<Specification>> GetSpecificationsByProductIdAsync(int productId)
+        {
+            var response = await _httpClient.GetAsync($"api/specification/get/{productId}");
+
+            if (response.IsSuccessStatusCode)
+            {
+                if (response.Content.Headers.ContentLength == 0)
+                    return null;
+                if (response.Content != null)
+                {
+                    return await response.Content.ReadFromJsonAsync<List<Specification>>();
+                }
+                else
+                {
+                    return new List<Specification>();
+                }
+            }
+            return new List<Specification>();
+        }
     }
 }
