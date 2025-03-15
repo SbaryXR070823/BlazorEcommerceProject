@@ -13,6 +13,7 @@
 @inject SpinnerService SpinnerService
 @inject ICartItemApiService CartService
 @inject LocalStorageService LocalStorageService
+@inject ISpecificationApiService SpecificationApiService
 @rendermode @(new InteractiveWebAssemblyRenderMode(prerender: false))
 
 <PageTitle>Manage Products</PageTitle>
@@ -58,7 +59,6 @@
                         </div>
                     }
                 </div>
-                <!-- Rest of the form fields unchanged -->
                 <div class="col-md-3">
                     <label class="form-label">Category</label>
                     <select @bind="filters.Category" class="form-select">
@@ -87,6 +87,31 @@
                         <i class="bi bi-x-circle"></i> Clear Filters
                     </button>
                 </div>
+                <div class="col-12">
+                    <button class="btn btn-link" @onclick="ToggleSpecFilters">
+                        <i class="bi bi-filter"></i> @(showSpecFilters ? "Hide" : "Show") Specification Filters
+                    </button>
+                </div>
+                @if (showSpecFilters)
+                {
+                    <div class="col-12">
+                        <div class="row g-3">
+                            @foreach (var specGroup in groupedSpecifications)
+                            {
+                                <div class="col-md-3">
+                                    <label class="form-label">@specGroup.Key</label>
+                                    <select class="form-select" @bind="filters.Specifications[specGroup.Key]">
+                                        <option value="">All</option>
+                                        @foreach (var value in specGroup.Value.Distinct())
+                                        {
+                                            <option value="@value">@value</option>
+                                        }
+                                    </select>
+                                </div>
+                            }
+                        </div>
+                    </div>
+                }
             </div>
         </div>
     </div>
@@ -184,14 +209,18 @@
 @code {
     private List<Product> products;
     private List<Category> categories = new();
-    private ProductFilters filters = new ProductFilters();
+    private ProductFilters filters = new ProductFilters
+    {
+        Specifications = new Dictionary<string, string>()
+    };
     private bool showDeleteModal = false;
     private int productIdToDelete;
     private bool isAdmin = false;
     private List<string> userRoles = new List<string>();
     private UserInfoDto userData = new UserInfoDto();
     private int currentCountOfCartItems = 0;
-
+    private bool showSpecFilters = false;
+    private Dictionary<string, List<string>> groupedSpecifications = new();
     private string searchInput;
     private bool showSuggestions = false;
     private List<string> searchSuggestions = new List<string>();
@@ -206,6 +235,7 @@
         categories = await CategoryService.GetCategoriesAsync();
         products = await ProductService.GetProductsAsync(filters);
         userRoles = await UserService.GetUserRoleAsync();
+        await LoadSpecifications();
         if (userRoles == null || !userRoles.Any() || userRoles.Contains("User"))
         {
             isAdmin = false;
@@ -240,6 +270,11 @@
     private async Task ApplyFilters()
     {
         await SpinnerService.ShowSpinnerAsync();
+        foreach (var spec in filters.Specifications)
+        {
+            Console.WriteLine($"Spec: {spec.Key} = {spec.Value}");
+        }
+
         products = await ProductService.GetProductsAsync(filters);
 
         if (!string.IsNullOrEmpty(filters.Name))
@@ -250,6 +285,25 @@
         await SpinnerService.HideSpinnerAsync();
     }
 
+    private void ToggleSpecFilters()
+    {
+        showSpecFilters = !showSpecFilters;
+    }
+    private async Task LoadSpecifications()
+    {
+        var specifications = await SpecificationApiService.GetSpecificationsAsync();
+        groupedSpecifications = specifications
+            .GroupBy(s => s.Key)
+            .ToDictionary(g => g.Key, g => g.Select(s => s.Value).ToList());
+
+        foreach (var key in groupedSpecifications.Keys)
+        {
+            if (!filters.Specifications.ContainsKey(key))
+            {
+                filters.Specifications[key] = string.Empty; 
+            }
+        }
+    }
     private async Task SaveSearchTerm(string term)
     {
         var searchHistory = await LocalStorageService.GetItemAsync<List<SearchHistoryItem>>(SearchHistoryKey) ?? new List<SearchHistoryItem>();
@@ -343,7 +397,21 @@
     private void ConfirmDelete(int productId) { productIdToDelete = productId; showDeleteModal = true; }
     private void CloseDeleteModal() => showDeleteModal = false;
     private async Task DeleteProduct() { await SpinnerService.ShowSpinnerAsync(); await ProductService.DeleteProductAsync(productIdToDelete); products = await ProductService.GetProductsAsync(filters); showDeleteModal = false; await SpinnerService.HideSpinnerAsync(); }
-    private async Task ClearFilters() { await SpinnerService.ShowSpinnerAsync(); filters = new ProductFilters(); products = await ProductService.GetProductsAsync(filters); await SpinnerService.HideSpinnerAsync(); }
+    private async Task ClearFilters()
+    {
+        await SpinnerService.ShowSpinnerAsync();
+
+        filters = new ProductFilters
+        {
+            Specifications = new Dictionary<string, string>()
+        };
+
+        await LoadSpecifications();
+
+        products = await ProductService.GetProductsAsync(filters);
+
+        await SpinnerService.HideSpinnerAsync();
+    }
 }
 
 <style>

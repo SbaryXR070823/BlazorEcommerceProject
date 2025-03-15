@@ -18,12 +18,35 @@ public class ProductApiService : IProductApiService
     public async Task<List<Product>> GetProductsAsync(ProductFilters filters)
     {
         var queryParameters = new Dictionary<string, string>();
-        if (!string.IsNullOrEmpty(filters.Name)) queryParameters["name"] = filters.Name;
-        if (!string.IsNullOrEmpty(filters.Category)) queryParameters["category"] = filters.Category;
-        if (filters.MinPrice.HasValue) queryParameters["minPrice"] = filters.MinPrice.Value.ToString(CultureInfo.InvariantCulture);
-        if (filters.MaxPrice.HasValue) queryParameters["maxPrice"] = filters.MaxPrice.Value.ToString(CultureInfo.InvariantCulture);
 
-        var queryString = new FormUrlEncodedContent(queryParameters).ReadAsStringAsync().Result;
+        if (!string.IsNullOrEmpty(filters.Name))
+        {
+            queryParameters["name"] = filters.Name;
+        }
+        if (!string.IsNullOrEmpty(filters.Category))
+        {
+            queryParameters["category"] = filters.Category;
+        }
+        if (filters.MinPrice.HasValue)
+        {
+            queryParameters["minPrice"] = filters.MinPrice.Value.ToString(CultureInfo.InvariantCulture);
+        }
+        if (filters.MaxPrice.HasValue)
+        {
+            queryParameters["maxPrice"] = filters.MaxPrice.Value.ToString(CultureInfo.InvariantCulture);
+        }
+        if (filters.Specifications != null && filters.Specifications.Any())
+        {
+            foreach (var spec in filters.Specifications)
+            {
+                if (!string.IsNullOrEmpty(spec.Value)) 
+                {
+                    queryParameters[$"specifications[{spec.Key}]"] = spec.Value;
+                }
+            }
+        }
+           
+        var queryString = await new FormUrlEncodedContent(queryParameters).ReadAsStringAsync();
         var fullUrl = $"{_httpClient.BaseAddress}api/product?{queryString}";
         Console.WriteLine($"Requesting: {fullUrl}");
 

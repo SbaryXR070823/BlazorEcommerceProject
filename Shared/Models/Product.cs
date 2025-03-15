@@ -1,4 +1,6 @@
-﻿namespace Shared.Models;
+﻿using System.Text.Json.Serialization;
+
+namespace Shared.Models;
 
 public class Product
 {
@@ -8,7 +10,9 @@ public class Product
     public decimal Price { get; set; }
     public int CategoryId { get; set; }
     public Category Category { get; set; }
-    public string ImageBase64 { get; set; }  
-    public ICollection<Specification> Specifications { get; set; }
+    public string ImageBase64 { get; set; }
+    [JsonIgnore]
+    public ICollection<Specification> Specifications { get; set; } = new List<Specification>();
+    [JsonIgnore]
     public ICollection<CartItem> CartItems { get; set; } = new List<CartItem>();
 }

@@ -15,20 +15,36 @@ public class ProductController : ControllerBase
     }
 
     [HttpGet]
+    [HttpGet]
     public async Task<IActionResult> GetProducts(
-        [FromQuery] string name = null,
-        [FromQuery] string category = null,
-        [FromQuery] decimal? minPrice = null,
-        [FromQuery] decimal? maxPrice = null)
+    [FromQuery] string name = null,
+    [FromQuery] string category = null,
+    [FromQuery] decimal? minPrice = null,
+    [FromQuery] decimal? maxPrice = null,
+    [FromQuery] Dictionary<string, string> specifications = null)
     {
         if (minPrice < 0 || maxPrice < 0)
         {
             return BadRequest("Price values cannot be negative.");
         }
-
         if (minPrice.HasValue && maxPrice.HasValue && minPrice > maxPrice)
         {
             return BadRequest("Minimum price cannot be greater than maximum price.");
+        }
+        var cleanSpecifications = new Dictionary<string, string>();
+
+        if (specifications != null)
+        {
+            foreach (var spec in specifications)
+            {
+                if (spec.Key.Equals("Name", StringComparison.OrdinalIgnoreCase) ||
+                    (name != null && spec.Key.Equals(name, StringComparison.OrdinalIgnoreCase)))
+                {
+                    continue;
+                }
+
+                cleanSpecifications[spec.Key] = spec.Value;
+            }
         }
 
         var filters = new ProductFilters
@@ -36,7 +52,8 @@ public class ProductController : ControllerBase
             Name = name,
             Category = category,
             MinPrice = minPrice,
-            MaxPrice = maxPrice
+            MaxPrice = maxPrice,
+            Specifications = cleanSpecifications
         };
 
         var products = await _productService.GetProductsAsync(filters);

@@ -12,5 +12,6 @@ namespace Shared.Models
         public string Category { get; set; }
         public decimal? MinPrice { get; set; }
         public decimal? MaxPrice { get; set; }
+        public Dictionary<string, string> Specifications { get; set; } = new Dictionary<string, string>();
     }
 }
