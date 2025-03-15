@@ -1,5 +1,6 @@
 ﻿using PcPartsStore.Services.Interfaces;
 using PcPartsStore.UnitOfWork;
+using Shared.Helpers;
 using Shared.Models;
 
 namespace PcPartsStore.Services
@@ -20,7 +21,8 @@ namespace PcPartsStore.Services
 
             if (!string.IsNullOrEmpty(filters.Name))
             {
-                filteredProducts = filteredProducts.Where(p => p.Name.Contains(filters.Name, StringComparison.OrdinalIgnoreCase));
+                var searchTerm = filters.Name.ToLower();
+                filteredProducts = filteredProducts.Where(p => StringSearch.KMPContains(p.Name.ToLower(), searchTerm));
             }
 
             if (!string.IsNullOrEmpty(filters.Category))
@@ -43,6 +45,7 @@ namespace PcPartsStore.Services
 
             return filteredProducts.ToList();
         }
+
 
         public async Task<Product> GetProductByIdAsync(int id)
         {
