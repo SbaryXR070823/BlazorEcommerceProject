@@ -45,11 +45,25 @@ namespace PcPartsStore.Services
             await _unitOfWork.Specifications.DeleteAsync(id);
             await UpdateLuceneIndexAsync();
         }
-
         public async Task<List<Specification>> GetSpecificationsByProductIdAsync(int productId)
         {
             return (await _unitOfWork.Specifications.FindAsync(s => s.ProductId == productId)).ToList();
         }
+
+        public async Task<List<Specification>> GetSpecificationsByProductIdsAsync(IEnumerable<int> productIds)
+        {
+            return (await _unitOfWork.Specifications.FindAsync(s => productIds.Contains(s.ProductId))).ToList();
+        }
+
+        public async Task<Dictionary<string, List<string>>> GetGroupedSpecificationsForProductsAsync(IEnumerable<int> productIds)
+        {
+            var specifications = await GetSpecificationsByProductIdsAsync(productIds);
+
+            return specifications
+                .GroupBy(s => s.Key)
+                .ToDictionary(g => g.Key, g => g.Select(s => s.Value).ToList());
+        }
+
         private async Task UpdateLuceneIndexAsync()
         {
             var products = await _unitOfWork.Products.GetAllAsync();

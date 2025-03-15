@@ -12,5 +12,7 @@ namespace PcPartsStore.Services.Interfaces
         Task UpdateSpecificationAsync(Specification specification);
         Task DeleteSpecificationAsync(int id);
         Task<List<Specification>> GetSpecificationsByProductIdAsync(int productId);
+        Task<Dictionary<string, List<string>>> GetGroupedSpecificationsForProductsAsync(IEnumerable<int> productIds);
+        Task<List<Specification>> GetSpecificationsByProductIdsAsync(IEnumerable<int> productIds);
     }
 }

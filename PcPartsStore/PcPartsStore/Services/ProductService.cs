@@ -39,13 +39,11 @@ namespace PcPartsStore.Services
 
             _luceneService.CreateIndex(products);
 
-            // Filter by name using StringSearch
             if (!string.IsNullOrEmpty(filters.Name))
             {
                 products = products.Where(p => StringSearch.KMPContains(p.Name, filters.Name)).ToList();
             }
 
-            // Filter by specifications
             if (filters.Specifications != null && filters.Specifications.Any())
             {
                 var nonEmptySpecs = filters.Specifications
@@ -66,7 +64,6 @@ namespace PcPartsStore.Services
                 }
             }
 
-            // Apply other filters (Category, MinPrice, MaxPrice)
             if (!string.IsNullOrEmpty(filters.Category))
             {
                 if (int.TryParse(filters.Category, out int categoryId))

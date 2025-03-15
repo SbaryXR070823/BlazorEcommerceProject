@@ -38,6 +38,9 @@ public class ProductController : ControllerBase
             foreach (var spec in specifications)
             {
                 if (spec.Key.Equals("Name", StringComparison.OrdinalIgnoreCase) ||
+                    spec.Key.Equals("category", StringComparison.OrdinalIgnoreCase) ||
+                    spec.Key.Equals("minPrice", StringComparison.OrdinalIgnoreCase) ||
+                    spec.Key.Equals("maxPrice", StringComparison.OrdinalIgnoreCase) ||
                     (name != null && spec.Key.Equals(name, StringComparison.OrdinalIgnoreCase)))
                 {
                     continue;

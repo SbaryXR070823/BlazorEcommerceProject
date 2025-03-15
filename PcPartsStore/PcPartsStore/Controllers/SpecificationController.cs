@@ -49,7 +49,6 @@ public class SpecificationController : ControllerBase
         {
             return BadRequest();
         }
-
         await _specificationService.UpdateSpecificationAsync(specification);
         return NoContent();
     }
@@ -64,8 +63,21 @@ public class SpecificationController : ControllerBase
     [HttpGet("get/{productId}")]
     public async Task<IActionResult> GetSpecificationByProductId(int productId)
     {
-        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
         var specifications = await _specificationService.GetSpecificationsByProductIdAsync(productId);
         return Ok(specifications);
+    }
+
+    [HttpPost("getbyproductids")]
+    public async Task<IActionResult> GetSpecificationsByProductIds([FromBody] List<int> productIds)
+    {
+        var specifications = await _specificationService.GetSpecificationsByProductIdsAsync(productIds);
+        return Ok(specifications);
+    }
+
+    [HttpPost("getgroupedbyproductids")]
+    public async Task<IActionResult> GetGroupedSpecificationsForProducts([FromBody] List<int> productIds)
+    {
+        var groupedSpecifications = await _specificationService.GetGroupedSpecificationsForProductsAsync(productIds);
+        return Ok(groupedSpecifications);
     }
 }

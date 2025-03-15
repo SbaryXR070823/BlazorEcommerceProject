@@ -235,7 +235,9 @@
         categories = await CategoryService.GetCategoriesAsync();
         products = await ProductService.GetProductsAsync(filters);
         userRoles = await UserService.GetUserRoleAsync();
-        await LoadSpecifications();
+
+        await LoadSpecificationsForDisplayedProducts();
+
         if (userRoles == null || !userRoles.Any() || userRoles.Contains("User"))
         {
             isAdmin = false;
@@ -277,6 +279,8 @@
 
         products = await ProductService.GetProductsAsync(filters);
 
+        await LoadSpecificationsForDisplayedProducts();
+
         if (!string.IsNullOrEmpty(filters.Name))
         {
             await SaveSearchTerm(filters.Name);
@@ -289,6 +293,28 @@
     {
         showSpecFilters = !showSpecFilters;
     }
+
+    private async Task LoadSpecificationsForDisplayedProducts()
+    {
+        if (products != null && products.Any())
+        {
+            var productIds = products.Select(p => p.Id).ToList();
+            groupedSpecifications = await SpecificationApiService.GetGroupedSpecificationsForProductsAsync(productIds);
+
+            foreach (var key in groupedSpecifications.Keys)
+            {
+                if (!filters.Specifications.ContainsKey(key))
+                {
+                    filters.Specifications[key] = string.Empty;
+                }
+            }
+        }
+        else
+        {
+            groupedSpecifications = new Dictionary<string, List<string>>();
+        }
+    }
+
     private async Task LoadSpecifications()
     {
         var specifications = await SpecificationApiService.GetSpecificationsAsync();
