@@ -6,7 +6,7 @@ namespace PcPartsStore.Services.Interfaces
     {
         Task<List<Product>> GetProductsAsync(ProductFilters filters);
         Task<Product> GetProductByIdAsync(int id);
-        Task AddProductAsync(Product product);
+        Task<Product> AddProductAsync(Product product);
         Task UpdateProductAsync(Product product);
         Task DeleteProductAsync(int id);
     }

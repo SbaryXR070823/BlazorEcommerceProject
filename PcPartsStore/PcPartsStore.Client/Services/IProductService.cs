@@ -7,7 +7,7 @@ namespace PcPartsStore.Client.Services
     {
         Task<List<Product>> GetProductsAsync(ProductFilters filters);
         Task<Product> GetProductByIdAsync(int id);
-        Task AddProductAsync(ProductCreateUpdateDto productDto);
+        Task<Product> AddProductAsync(ProductCreateUpdateDto productDto);
         Task UpdateProductAsync(ProductCreateUpdateDto productDto);
         Task DeleteProductAsync(int id);
     }

@@ -262,6 +262,7 @@
     private Specification currentSpecification = new Specification();
     private bool showDeleteSpecificationModal = false;
     private int specificationIdToDelete;
+    private List<Specification> temporarySpecifications = new List<Specification>();
 
     protected override async Task OnInitializedAsync()
     {
@@ -331,23 +332,36 @@
     {
         await SpinnerService.ShowSpinnerAsync();
         var productDto = new ProductCreateUpdateDto
-        {
-            Id = ProductId,
-            Name = product.Name,
-            Description = product.Description,
-            Price = product.Price,
-            CategoryId = categoryId,
-            ImageBase64 = product.ImageBase64
-        };
+            {
+                Name = product.Name,
+                Description = product.Description,
+                Price = product.Price,
+                CategoryId = categoryId,
+                ImageBase64 = product.ImageBase64
+            };
 
         if (ProductId == 0)
         {
-            await ProductService.AddProductAsync(productDto);
+            var newProduct = await ProductService.AddProductAsync(productDto);
+            ProductId = newProduct.Id;
+
+            foreach (var spec in temporarySpecifications)
+            {
+                spec.ProductId = ProductId;
+                await SpecificationApiService.AddSpecificationAsync(spec);
+            }
         }
         else
         {
             await ProductService.UpdateProductAsync(productDto);
+            foreach (var spec in specifications)
+            {
+                await SpecificationApiService.UpdateSpecificationAsync(spec);
+            }
         }
+
+        temporarySpecifications.Clear();
+
         NavigateBack();
         await SpinnerService.HideSpinnerAsync();
     }
@@ -410,8 +424,17 @@
         }
         else
         {
-            await SpecificationApiService.AddSpecificationAsync(currentSpecification);
+            if (ProductId == 0)
+            {
+                temporarySpecifications.Add(currentSpecification);
+            }
+            else
+            {
+                currentSpecification.ProductId = ProductId;
+                await SpecificationApiService.AddSpecificationAsync(currentSpecification);
+            }
         }
+
         specifications = await SpecificationApiService.GetSpecificationsByProductIdAsync(ProductId);
         showSpecificationModal = false;
         await SpinnerService.HideSpinnerAsync();

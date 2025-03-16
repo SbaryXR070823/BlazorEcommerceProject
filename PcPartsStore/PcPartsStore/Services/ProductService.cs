@@ -91,10 +91,11 @@ namespace PcPartsStore.Services
             return response;
         }
 
-        public async Task AddProductAsync(Product product)
+        public async Task<Product> AddProductAsync(Product product)
         {
-            await _unitOfWork.Products.AddAsync(product);
+            var addedProduct = await _unitOfWork.Products.AddAsync(product);
             await UpdateLuceneIndexAsync();
+            return addedProduct;
         }
 
         public async Task UpdateProductAsync(Product product)

@@ -58,9 +58,19 @@ public class ProductApiService : IProductApiService
         return await _httpClient.GetFromJsonAsync<Product>($"api/product/{id}");
     }
 
-    public async Task AddProductAsync(ProductCreateUpdateDto productDto)
+    public async Task<Product> AddProductAsync(ProductCreateUpdateDto productDto)
     {
-        await _httpClient.PostAsJsonAsync("api/product", productDto);
+        var response = await _httpClient.PostAsJsonAsync("api/product", productDto);
+
+        if (response.IsSuccessStatusCode)
+        {
+            var addedProduct = await response.Content.ReadFromJsonAsync<Product>();
+            return addedProduct;
+        }
+        else
+        {
+            throw new HttpRequestException($"Failed to add product. Status code: {response.StatusCode}");
+        }
     }
 
     public async Task UpdateProductAsync(ProductCreateUpdateDto productDto)

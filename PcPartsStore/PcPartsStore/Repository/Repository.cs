@@ -34,10 +34,11 @@ namespace PcPartsStore.Repository
             return await _dbSet.Where(predicate).ToListAsync();
         }
 
-        public async Task AddAsync(T entity)
+        public async Task<T> AddAsync(T entity)
         {
             await _dbSet.AddAsync(entity);
             await _context.SaveChangesAsync();
+            return entity; 
         }
 
         public async Task UpdateAsync(T entity)
