@@ -4,74 +4,79 @@
 
 <div class="top-row ps-3 navbar navbar-dark">
     <div class="container-fluid">
-        <a class="navbar-brand" href="">PcPartsStore</a>
+        <a class="navbar-brand" href="">
+            <i class="bi bi-pc-display me-2"></i>PC Parts Store
+        </a>
     </div>
 </div>
 
 <input type="checkbox" title="Navigation menu" class="navbar-toggler" />
 
-<div class="nav-scrollable" onclick="document.querySelector('.navbar-toggler').click()">
+<div class="nav-scrollable">
     <nav class="nav flex-column">
         <div class="nav-item px-3">
             <NavLink class="nav-link" href="" Match="NavLinkMatch.All">
-                <span class="bi bi-house-door-fill-nav-menu" aria-hidden="true"></span> Home
-            </NavLink>
-        </div>
-
-@*         <div class="nav-item px-3">
-            <NavLink class="nav-link" href="counter">
-                <span class="bi bi-plus-square-fill-nav-menu" aria-hidden="true"></span> Counter
-            </NavLink>
-        </div>
-
-        <div class="nav-item px-3">
-            <NavLink class="nav-link" href="weather">
-                <span class="bi bi-list-nested-nav-menu" aria-hidden="true"></span> Weather
-            </NavLink>
-        </div> *@
-
-        <div class="nav-item px-3">
-            <NavLink class="nav-link" href="auth">
-                <span class="bi bi-lock-nav-menu" aria-hidden="true"></span> Auth Required
+                <i class="bi bi-house-door me-2"></i> Home
             </NavLink>
         </div>
 
         <AuthorizeView>
             <Authorized>
                 <div class="nav-item px-3">
-                    <NavLink class="nav-link" href="Account/Manage">
-                        <span class="bi bi-person-fill-nav-menu" aria-hidden="true"></span> @context.User.Identity?.Name
-                    </NavLink>
-                </div>
-@*                 <div class="nav-item px-3">
-                    <form action="Account/Logout" method="post">
-                        <AntiforgeryToken />
-                        <input type="hidden" name="ReturnUrl" value="@currentUrl" />
-                        <button type="submit" class="nav-link">
-                            <span class="bi bi-arrow-bar-left-nav-menu" aria-hidden="true"></span> Logout
-                        </button>
-                    </form>
-                </div> *@
-                <div class="nav-item px-3">
                     <NavLink class="nav-link" href="Products">
-                        <span class="bi bi-shop-nav-menu" aria-hidden="true"></span> Shop
+                        <i class="bi bi-shop me-2"></i> Shop Products
                     </NavLink>
                 </div>
+                
+                @if (!context.User.IsInRole("Admin"))
+                {
                 <div class="nav-item px-3">
                     <NavLink class="nav-link" href="my-orders">
-                        <span class="bi bi-clipboard-data-nav-menu" aria-hidden="true"></span> My Orders
+                        <i class="bi bi-clipboard-check me-2"></i> My Orders
+                    </NavLink>
+                </div>
+                }
+                
+                <div class="nav-item px-3">
+                    <NavLink class="nav-link" href="cart">
+                        <i class="bi bi-cart3 me-2"></i> Shopping Cart
+                    </NavLink>
+                </div>
+                                    
+                <div class="nav-item px-3 mt-3">
+                    <div class="nav-category">
+                        <small class="text-uppercase text-muted fw-semibold px-3 mb-2 d-block">Account</small>
+                    </div>
+                </div>
+                
+                <div class="nav-item px-3">
+                    <NavLink class="nav-link" href="Account/Manage">
+                        <i class="bi bi-person-gear me-2"></i> My Profile
                     </NavLink>
                 </div>
             </Authorized>
             <NotAuthorized>
                 <div class="nav-item px-3">
-                    <NavLink class="nav-link" href="Account/Register">
-                        <span class="bi bi-person-nav-menu" aria-hidden="true"></span> Register
+                    <NavLink class="nav-link" href="Products">
+                        <i class="bi bi-shop me-2"></i> Shop Products
                     </NavLink>
                 </div>
+                
+                <div class="nav-item px-3 mt-3">
+                    <div class="nav-category">
+                        <small class="text-uppercase text-muted fw-semibold px-3 mb-2 d-block">Account</small>
+                    </div>
+                </div>
+                
+                <div class="nav-item px-3">
+                    <NavLink class="nav-link" href="Account/Register">
+                        <i class="bi bi-person-plus me-2"></i> Register
+                    </NavLink>
+                </div>
+                
                 <div class="nav-item px-3">
                     <NavLink class="nav-link" href="Account/Login">
-                        <span class="bi bi-person-badge-nav-menu" aria-hidden="true"></span> Login
+                        <i class="bi bi-box-arrow-in-right me-2"></i> Login
                     </NavLink>
                 </div>
             </NotAuthorized>

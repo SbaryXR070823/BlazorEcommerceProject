@@ -8,89 +8,117 @@
 @inject SpinnerService SpinnerService
 @rendermode @(new InteractiveWebAssemblyRenderMode(prerender: false))
 
-<div class="container">
-    <h1 class="my-4">Your Shopping Cart</h1>
+<div class="container py-5">
+    <div class="row mb-4">
+        <div class="col-12">
+            <h1 class="fw-bold display-6 mb-0">
+                <i class="bi bi-cart3 me-3 text-primary"></i>Your Shopping Cart
+            </h1>
+        </div>
+    </div>
 
     @if (CartProducts == null || !CartProducts.Any())
     {
-        <div class="alert alert-info text-center">
-            <i class="bi bi-cart-x fs-1 mb-3 d-block"></i>
-            <p>Your cart is empty. Continue shopping and add some items!</p>
-            <button class="btn btn-primary mt-3" @onclick="NavigateToProducts">
-                Browse Products
-            </button>
+        <div class="card shadow-sm">
+            <div class="card-body text-center py-5">
+                <div class="mb-4">
+                    <i class="bi bi-cart-x text-secondary" style="font-size: 4rem;"></i>
+                </div>
+                <h3 class="mb-3">Your cart is empty</h3>
+                <p class="text-muted mb-4">Continue shopping and add some PC parts to your cart!</p>
+                <button class="btn btn-primary" @onclick="NavigateToProducts">
+                    <i class="bi bi-shop me-2"></i>Browse Products
+                </button>
+            </div>
         </div>
     }
     else
     {
-        <div class="row">
-            <div class="col-md-8">
-                @foreach (var cartItem in CartProducts)
-                {
-                    <div class="card mb-3">
-                        <div class="row g-0">
-                            <div class="col-md-4">
-                                <img src="data:image/jpeg;base64,@cartItem.Product.ImageBase64"
-                                     class="img-fluid rounded-start"
-                                     alt="@cartItem.Product.Name">
-                            </div>
-                            <div class="col-md-8">
-                                <div class="card-body">
-                                    <h5 class="card-title">@cartItem.Product.Name</h5>
-                                    <p class="card-text">
-                                        @{
-                                            bool isExpanded = expandedDescriptions.Contains(cartItem.ProductId);
-                                            string displayDescription = isExpanded || cartItem.Product.Description.Length <= 100
-                                            ? cartItem.Product.Description
-                                            : cartItem.Product.Description.Substring(0, 100) + "...";
-                                        }
-                                        @displayDescription
-                                        @if (cartItem.Product.Description.Length > 100)
-                                        {
-                                            <button class="btn btn-link btn-sm"
-                                                    @onclick="() => ToggleDescription(cartItem.ProductId)">
-                                                @(expandedDescriptions.Contains(cartItem.ProductId) ? "Collapse" : "Expand")
-                                            </button>
-                                        }
-                                    </p>
-                                    <div class="d-flex justify-content-between align-items-center">
-                                        <div class="quantity-selector">
-                                            <select class="form-select w-auto"
-                                                    @bind="cartItem.Quantity"
-                                                    @bind:event="onchange"
-                                                    @bind:after="async () => await UpdateQuantity(cartItem)">
-                                                @for (int i = 1; i <= 10; i++)
-                                                {
-                                                    <option value="@i">@i</option>
+        <div class="row g-4">
+            <div class="col-lg-8">
+                <div class="card shadow-sm">
+                    <div class="card-header bg-transparent">
+                        <h5 class="mb-0">Cart Items (@CartProducts.Count)</h5>
+                    </div>
+                    <div class="card-body p-0">
+                        <div class="list-group list-group-flush">
+                            @foreach (var cartItem in CartProducts)
+                            {
+                                <div class="list-group-item p-3 border-bottom">
+                                    <div class="row align-items-center">
+                                        <div class="col-md-2 mb-3 mb-md-0">
+                                            <img src="data:image/jpeg;base64,@cartItem.Product.ImageBase64"
+                                                 class="img-fluid rounded"
+                                                 alt="@cartItem.Product.Name"
+                                                 style="object-fit: cover; max-height: 100px;">
+                                        </div>
+                                        <div class="col-md-6 mb-3 mb-md-0">
+                                            <h5 class="mb-1">@cartItem.Product.Name</h5>
+                                            <p class="text-muted small mb-1">
+                                                @{
+                                                    bool isExpanded = expandedDescriptions.Contains(cartItem.ProductId);
+                                                    string displayDescription = isExpanded || cartItem.Product.Description.Length <= 100
+                                                    ? cartItem.Product.Description
+                                                    : cartItem.Product.Description.Substring(0, 100) + "...";
                                                 }
-                                            </select>
+                                                @displayDescription
+                                                @if (cartItem.Product.Description.Length > 100)
+                                                {
+                                                    <button class="btn btn-link btn-sm p-0"
+                                                            @onclick="() => ToggleDescription(cartItem.ProductId)">
+                                                        @(expandedDescriptions.Contains(cartItem.ProductId) ? "Show less" : "Show more")
+                                                    </button>
+                                                }
+                                            </p>
+                                            <div class="text-primary fw-bold">@cartItem.Product.Price.ToString("C")</div>
                                         </div>
-                                        <div class="price">
-                                            <strong>@cartItem.Product.Price.ToString("C")</strong>
+                                        <div class="col-md-2 mb-3 mb-md-0">
+                                            <div class="d-flex align-items-center">
+                                                <select class="form-select form-select-sm"
+                                                        @bind="cartItem.Quantity"
+                                                        @bind:event="onchange"
+                                                        @bind:after="async () => await UpdateQuantity(cartItem)">
+                                                    @for (int i = 1; i <= 10; i++)
+                                                    {
+                                                        <option value="@i">@i</option>
+                                                    }
+                                                </select>
+                                            </div>
                                         </div>
-                                        <button class="btn btn-danger btn-sm"
-                                                @onclick="() => RemoveFromCart(cartItem.CartItemId)">
-                                            <i class="bi bi-trash"></i> Remove
-                                        </button>
+                                        <div class="col-md-2 text-end">
+                                            <button class="btn btn-outline-danger btn-sm"
+                                                    @onclick="() => RemoveFromCart(cartItem.CartItemId)">
+                                                <i class="bi bi-trash me-1"></i> Remove
+                                            </button>
+                                        </div>
                                     </div>
                                 </div>
-                            </div>
+                            }
                         </div>
                     </div>
-                }
+                </div>
             </div>
-            <div class="col-md-4">
-                <div class="card">
+            <div class="col-lg-4">
+                <div class="card shadow-sm">
+                    <div class="card-header bg-transparent">
+                        <h5 class="mb-0">Order Summary</h5>
+                    </div>
                     <div class="card-body">
-                        <h5 class="card-title">Order Summary</h5>
-                        <p class="card-text">
-                            Total Items: @CartProducts.Sum(c => c.Quantity)
-                        </p>
-                        <p class="card-text">
-                            Total Price: @(CartProducts.Sum(c => c.Product.Price * c.Quantity).ToString("C"))
-                        </p>
-                        <button class="btn btn-success w-100" @onclick="ConfirmCheckout">
-                            Proceed to Checkout
+                        <div class="d-flex justify-content-between mb-3">
+                            <span>Subtotal</span>
+                            <span class="fw-bold">@(CartProducts.Sum(c => c.Product.Price * c.Quantity).ToString("C"))</span>
+                        </div>
+                        <div class="d-flex justify-content-between mb-3">
+                            <span>Items</span>
+                            <span>@CartProducts.Sum(c => c.Quantity)</span>
+                        </div>
+                        <hr />
+                        <div class="d-flex justify-content-between mb-4">
+                            <span class="fw-bold">Total</span>
+                            <span class="fw-bold fs-5 text-primary">@(CartProducts.Sum(c => c.Product.Price * c.Quantity).ToString("C"))</span>
+                        </div>
+                        <button class="btn btn-primary w-100" @onclick="ConfirmCheckout">
+                            <i class="bi bi-credit-card me-2"></i>Proceed to Checkout
                         </button>
                     </div>
                 </div>
@@ -102,38 +130,28 @@
 @if (showConfirmationDialog)
 {
     <div class="modal fade show d-block" tabindex="-1" role="dialog" style="background: rgba(0, 0, 0, 0.5);">
-        <div class="modal-dialog" role="document">
-            <div class="modal-content">
+        <div class="modal-dialog modal-dialog-centered" role="document">
+            <div class="modal-content shadow">
                 <div class="modal-header">
-                    <h5 class="modal-title">Confirm Checkout</h5>
+                    <h5 class="modal-title"><i class="bi bi-credit-card me-2"></i>Confirm Checkout</h5>
                     <button type="button" class="btn-close" @onclick="CancelCheckout"></button>
                 </div>
                 <div class="modal-body">
                     <p>Are you sure you want to proceed with the checkout?</p>
+                    <p class="text-muted small">Your order total is: <strong>@(CartProducts.Sum(c => c.Product.Price * c.Quantity).ToString("C"))</strong></p>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" @onclick="CancelCheckout">Cancel</button>
-                    <button type="button" class="btn btn-primary" @onclick="async () => await ProceedToCheckout()">Yes, Proceed</button>
+                    <button type="button" class="btn btn-outline-secondary" @onclick="CancelCheckout">
+                        <i class="bi bi-x me-2"></i>Cancel
+                    </button>
+                    <button type="button" class="btn btn-primary" @onclick="async () => await ProceedToCheckout()">
+                        <i class="bi bi-check2 me-2"></i>Yes, Proceed
+                    </button>
                 </div>
             </div>
         </div>
     </div>
 }
-
-<style>
-    .quantity-selector select {
-        width: 70px;
-    }
-
-    .card-body > .row {
-        align-items: center;
-    }
-
-    .img-fluid {
-        max-height: 200px;
-        object-fit: cover;
-    }
-</style>
 
 @code {
     public decimal TotalPrice { get; set; }

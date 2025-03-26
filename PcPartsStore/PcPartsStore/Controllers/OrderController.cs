@@ -100,6 +100,7 @@ namespace PcPartsStore.Controllers
                     ProductImage = item.Product.ImageBase64,
                     ProductName = item.Product.Name,
                     ProductPrice = item.Product.Price,
+                    ProductDescriptions = item.Product.Description,
                     Quantity = item.Quantity
                 });
             }

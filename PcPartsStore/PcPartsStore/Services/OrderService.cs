@@ -61,6 +61,7 @@ namespace PcPartsStore.Services
                         ProductId = item.ProductId,
                         ProductName = product.Name,
                         ProductImage = product.ImageBase64,
+                        ProductDescriptions = product.Description,
                         ProductPrice = product.Price,
                         Quantity = item.Quantity
                     });

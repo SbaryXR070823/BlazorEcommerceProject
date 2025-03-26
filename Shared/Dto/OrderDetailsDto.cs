@@ -20,6 +20,7 @@ namespace Shared.Dto
         public int ProductId { get; set; }
         public string ProductName { get; set; }
         public string ProductImage { get; set; }
+        public string ProductDescriptions { get; set; }
         public decimal ProductPrice { get; set; }
         public int Quantity { get; set; }
         public decimal Subtotal => ProductPrice * Quantity;

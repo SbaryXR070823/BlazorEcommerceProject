@@ -2,39 +2,52 @@
     position: relative;
     display: flex;
     flex-direction: column;
+    min-height: 100vh;
 }
 
 main {
     flex: 1;
+    display: flex;
+    flex-direction: column;
 }
 
 .sidebar {
-    background-image: linear-gradient(180deg, rgb(5, 39, 103) 0%, #3a0647 70%);
+    background-color: var(--background-dark);
+    color: var(--background-light);
+    box-shadow: var(--shadow-lg);
 }
 
 .top-row {
-    background-color: #f7f7f7;
-    border-bottom: 1px solid #d6d5d5;
+    background-color: white;
+    border-bottom: 1px solid var(--border-color);
     justify-content: flex-end;
     height: 3.5rem;
     display: flex;
     align-items: center;
+    box-shadow: var(--shadow-sm);
+    z-index: 1000;
 }
 
-    .top-row ::deep a, .top-row ::deep .btn-link {
-        white-space: nowrap;
-        margin-left: 1.5rem;
-        text-decoration: none;
-    }
+.top-row ::deep a, .top-row ::deep .btn-link {
+    white-space: nowrap;
+    margin-left: 1.5rem;
+    text-decoration: none;
+}
 
-    .top-row ::deep a:hover, .top-row ::deep .btn-link:hover {
-        text-decoration: underline;
-    }
+.top-row ::deep a:hover, .top-row ::deep .btn-link:hover {
+    text-decoration: underline;
+}
 
-    .top-row ::deep a:first-child {
-        overflow: hidden;
-        text-overflow: ellipsis;
-    }
+.top-row a:first-child {
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.footer {
+    background-color: #f8f9fa;
+    border-top: 1px solid var(--border-color);
+    margin-top: auto;
+}
 
 @media (max-width: 640.98px) {
     .top-row {
@@ -56,6 +69,7 @@ main {
         height: 100vh;
         position: sticky;
         top: 0;
+        z-index: 1000;
     }
 
     .top-row {
@@ -64,46 +78,88 @@ main {
         z-index: 1;
     }
 
-    .top-row.auth ::deep a:first-child {
+    .top-row.auth {
+        justify-content: space-between;
+    }
+
+    .top-row ::deep a:first-child {
         flex: 1;
         text-align: right;
         width: 0;
     }
 
-    .top-row, article {
+    article {
         padding-left: 2rem !important;
         padding-right: 1.5rem !important;
     }
+
+    .content {
+        margin-left: 0;
+        padding-top: 1.1rem;
+    }
 }
 
+/* Hide sidebar when not authorized */
+.page:not(:has(.sidebar)) main {
+    margin-left: 0;
+}
+
+/* Blazor Error UI */
 #blazor-error-ui {
-    color-scheme: light only;
-    background: lightyellow;
+    background: #ffffe0;
     bottom: 0;
     box-shadow: 0 -1px 2px rgba(0, 0, 0, 0.2);
-    box-sizing: border-box;
     display: none;
     left: 0;
     padding: 0.6rem 1.25rem 0.7rem 1.25rem;
     position: fixed;
     width: 100%;
-    z-index: 1000;
+    z-index: 1001;
+    color: black;
 }
 
-    #blazor-error-ui .dismiss {
-        cursor: pointer;
-        position: absolute;
-        right: 0.75rem;
-        top: 0.5rem;
-    }
+#blazor-error-ui .dismiss {
+    cursor: pointer;
+    position: absolute;
+    right: 0.75rem;
+    top: 0.5rem;
+}
 
-.top-row {
+.loading-progress {
+    position: relative;
+    display: block;
+    width: 8rem;
+    height: 8rem;
+    margin: 20vh auto 1rem auto;
+}
+
+.loading-progress circle {
+    fill: none;
+    stroke: #e0e0e0;
+    stroke-width: 0.6rem;
+    transform-origin: 50% 50%;
+    transform: rotate(-90deg);
+}
+
+.loading-progress circle:last-child {
+    stroke: var(--primary-color);
+    stroke-dasharray: calc(3.141 * var(--blazor-load-percentage, 0%) * 0.8), 500%;
+    transition: stroke-dasharray 0.05s ease-in-out;
+}
+
+.loading-progress-text {
+    position: absolute;
+    text-align: center;
+    font-weight: bold;
+    inset: 0;
     display: flex;
-    justify-content: space-between;
     align-items: center;
-    background-color: #f8f9fa;
-    padding: 10px 20px;
-    border-bottom: 1px solid #ddd;
+    justify-content: center;
+    color: var(--text-primary);
+}
+
+.loading-progress-text:after {
+    content: var(--blazor-load-percentage-text, "Loading");
 }
 
 .user-card {
@@ -130,7 +186,6 @@ main {
     margin: 0;
 }
 
-
 #loading-spinner {
     display: none;
     position: fixed;
@@ -144,14 +199,14 @@ main {
     align-items: center;
 }
 
-    #loading-spinner .spinner {
-        border: 16px solid #f3f3f3;
-        border-top: 16px solid #3498db;
-        border-radius: 50%;
-        width: 80px;
-        height: 80px;
-        animation: spin 2s linear infinite;
-    }
+#loading-spinner .spinner {
+    border: 16px solid #f3f3f3;
+    border-top: 16px solid #3498db;
+    border-radius: 50%;
+    width: 80px;
+    height: 80px;
+    animation: spin 2s linear infinite;
+}
 
 @keyframes spin {
     0% {
