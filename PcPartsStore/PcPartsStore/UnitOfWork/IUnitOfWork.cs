@@ -10,6 +10,7 @@ namespace PcPartsStore.UnitOfWork
         IRepository<Specification> Specifications { get; }
         IRepository<CartItem> CartItems { get; }
         IRepository<Order> Orders { get; }
+        IRepository<OrderItem> OrderItems { get; }
 
         Task SaveChangesAsync();
     }

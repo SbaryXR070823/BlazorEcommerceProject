@@ -17,6 +17,8 @@ builder.Services.AddTransient<ICategoryApiService, CategoryApiService>();
 builder.Services.AddTransient<IUserApiService, UserApiService>();
 builder.Services.AddTransient<ISpecificationApiService, SpecificationApiService>();
 builder.Services.AddTransient<ICartItemApiService, CartItemApiService>();
+builder.Services.AddTransient<IOrderApiService, OrderApiService>();
+builder.Services.AddTransient<IOrderItemApiService, OrderItemApiService>();
 builder.Services.AddScoped<SpinnerService>();
 builder.Services.AddAuthorizationCore();
 builder.Services.AddCascadingAuthenticationState();

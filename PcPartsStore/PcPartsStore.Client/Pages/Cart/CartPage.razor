@@ -3,6 +3,7 @@
 @using Shared.Services
 @using Shared.Models
 @inject ICartItemApiService CartService
+@inject IOrderApiService OrderService
 @inject NavigationManager NavigationManager
 @inject SpinnerService SpinnerService
 @rendermode @(new InteractiveWebAssemblyRenderMode(prerender: false))
@@ -201,13 +202,24 @@
 
     private async Task ProceedToCheckout()
     {
-        await SpinnerService.ShowSpinnerAsync();
-        foreach (var cartItem in CartProducts)
+        try
         {
-            await CartService.DeleteCartItemAsync(cartItem.CartItemId);
+            await SpinnerService.ShowSpinnerAsync();
+            
+            var order = await OrderService.CreateOrderAsync();
+            
+            await SpinnerService.HideSpinnerAsync();
+            showConfirmationDialog = false;
+            
+            NavigationManager.NavigateTo($"/order-confirmation/{order.Id}");
         }
-        await SpinnerService.HideSpinnerAsync();
-        NavigationManager.NavigateTo("/products");
+        catch (Exception ex)
+        {
+            await SpinnerService.HideSpinnerAsync();
+            showConfirmationDialog = false;
+            Console.WriteLine($"Error creating order: {ex.Message}");
+            NavigationManager.NavigateTo("/products");
+        }
     }
 
     private void NavigateToProducts()

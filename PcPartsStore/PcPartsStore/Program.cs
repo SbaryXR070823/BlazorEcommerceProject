@@ -39,6 +39,8 @@ builder.Services.AddTransient<IProductService, ProductService>();
 builder.Services.AddTransient<ICategoryService, CategoryService>();
 builder.Services.AddTransient<ICartItemsService, CartItemsService>();
 builder.Services.AddTransient<ISpecificationService, SpecificationService>();
+builder.Services.AddTransient<IOrderService, OrderService>();
+builder.Services.AddTransient<IOrderItemService, OrderItemService>();
 builder.Services.AddScoped<SpinnerService>();
 builder.Services.AddBlazoredLocalStorage();
 builder.Services.AddScoped<LocalStorageService>();

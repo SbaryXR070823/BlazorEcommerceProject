@@ -13,6 +13,7 @@ public class UnitOfWork : IUnitOfWork
     public IRepository<Specification> Specifications { get; }
     public IRepository<CartItem> CartItems { get; }
     public IRepository<Order> Orders { get; }
+    public IRepository<OrderItem> OrderItems { get; }
 
     public UnitOfWork(ApplicationDbContext context)
     {
@@ -22,6 +23,7 @@ public class UnitOfWork : IUnitOfWork
         Specifications = new Repository<Specification>(_context);
         CartItems = new Repository<CartItem>(_context);
         Orders = new Repository<Order>(_context);
+        OrderItems = new Repository<OrderItem>(_context);
     }
 
     public async Task SaveChangesAsync()

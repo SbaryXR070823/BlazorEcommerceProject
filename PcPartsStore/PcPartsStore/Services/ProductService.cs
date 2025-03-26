@@ -22,7 +22,6 @@ namespace PcPartsStore.Services
             var products = await _unitOfWork.Products.GetAllAsync();
             var specifications = await _unitOfWork.Specifications.GetAllAsync();
 
-            // Attach specifications to products
             var specLookup = specifications.GroupBy(s => s.ProductId)
                                             .ToDictionary(g => g.Key, g => g.ToList());
             foreach (var product in products)
