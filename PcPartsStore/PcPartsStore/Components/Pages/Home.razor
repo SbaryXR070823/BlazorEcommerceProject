@@ -1,7 +1,181 @@
 ﻿@page "/"
+@rendermode InteractiveServer
+@using Microsoft.AspNetCore.Components.Authorization
+@inject NavigationManager NavigationManager
+@inject AuthenticationStateProvider AuthenticationStateProvider
 
-<PageTitle>Home</PageTitle>
+<PageTitle>PC Parts Store - Premium Computer Components</PageTitle>
 
-<h1>Hello, world!</h1>
+<main class="home-page">
+    <section class="hero-section">
+        <div class="container py-5">
+            <div class="row align-items-center">
+                <div class="col-lg-6 order-lg-1 order-2">
+                    <h1 class="display-4 fw-bold text-primary mb-3">
+                        @if (isAuthenticated)
+                        {
+                            <text>Welcome Back, PC Builder!</text>
+                        }
+                        else
+                        {
+                            <text>Build Your Dream PC</text>
+                        }
+                    </h1>
 
-Welcome to your new app.
+                    <p class="lead mb-4">
+                        Your one-stop shop for premium computer components. 
+                        We offer the latest hardware, expert advice, and competitive prices 
+                        to help you build the perfect system.
+                    </p>
+
+                    <div class="d-grid gap-3 d-sm-flex">
+                        @if (isAuthenticated)
+                        {
+                            <button class="btn btn-primary btn-lg px-4" @onclick="NavigateToOrders">
+                                Go to orders
+                            </button>
+                            <button class="btn btn-outline-primary btn-lg px-4" @onclick="NavigateToProducts">
+                                Browse Products
+                            </button>
+                        }
+                        else
+                        {
+                            <button class="btn btn-outline-primary btn-lg px-4" @onclick="NavigateToLogin">
+                                Sign In
+                            </button>
+                            <button class="btn btn-outline-secondary btn-lg px-4" @onclick="NavigateToRegister">
+                                Register
+                            </button>
+                        }
+                    </div>
+                </div>
+                <div class="col-lg-6 order-lg-2 order-1 mb-4 mb-lg-0">
+                    <img src="customPc.jpg" 
+                    class="img-fluid rounded-3 shadow-lg" 
+                    alt="Custom PC Build">
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="py-5 bg-light">
+        <div class="container">
+            <div class="row g-4">
+                <div class="col-md-4">
+                    <div class="text-center p-4 h-100">
+                        <div class="bg-primary bg-opacity-10 text-primary rounded-circle d-inline-flex align-items-center justify-content-center mb-3" style="width: 64px; height: 64px;">
+                            <i class="bi bi-shield-check fs-3"></i>
+                        </div>
+                        <h3>Trusted Quality</h3>
+                        <p class="text-muted mb-0">
+                            We source only from reputable manufacturers and test all components for reliability.
+                        </p>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="text-center p-4 h-100">
+                        <div class="bg-primary bg-opacity-10 text-primary rounded-circle d-inline-flex align-items-center justify-content-center mb-3" style="width: 64px; height: 64px;">
+                            <i class="bi bi-headset fs-3"></i>
+                        </div>
+                        <h3>Expert Support</h3>
+                        <p class="text-muted mb-0">
+                            Our team of PC building experts is available to help you make the right choices.
+                        </p>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="text-center p-4 h-100">
+                        <div class="bg-primary bg-opacity-10 text-primary rounded-circle d-inline-flex align-items-center justify-content-center mb-3" style="width: 64px; height: 64px;">
+                            <i class="bi bi-truck fs-3"></i>
+                        </div>
+                        <h3>Fast Shipping</h3>
+                        <p class="text-muted mb-0">
+                            Get your components quickly with our reliable worldwide shipping options.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="py-5">
+        <div class="container text-center">
+            <h2 class="mb-4">Ready to Start Building?</h2>
+            <p class="lead text-muted mb-4 mx-auto" style="max-width: 600px;">
+                Whether you're upgrading your current system or building from scratch, we have everything you need.
+            </p>
+            <button class="btn btn-primary btn-lg px-5" @onclick="NavigateToProducts">
+                Shop Now
+            </button>
+        </div>
+    </section>
+</main>
+
+@code {
+    private bool isAuthenticated = false;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+        isAuthenticated = authState.User.Identity?.IsAuthenticated ?? false;
+    }
+
+    private void NavigateToProducts()
+    {
+        @if (isAuthenticated)
+        {
+            NavigationManager.NavigateTo("/products");
+
+        }
+        else
+        {
+            NavigateToLogin();
+        }
+
+    }
+
+    private void NavigateToLogin()
+    {
+        NavigationManager.NavigateTo("/Account/Login");
+    }
+
+    private void NavigateToRegister()
+    {
+        NavigationManager.NavigateTo("/Account/Register");
+    }
+
+    private void NavigateToOrders()
+    {
+        NavigationManager.NavigateTo("/my-orders");
+    }
+}
+
+<style>
+    .hero-section {
+        background-color: #f8f9fa;
+        background-image: linear-gradient(to bottom, rgba(248, 249, 250, 0.9), rgba(248, 249, 250, 0.9));
+        padding: 4rem 0;
+    }
+
+    .home-page {
+        min-height: calc(100vh - 120px);
+    }
+
+    .value-card {
+        transition: transform 0.3s ease;
+    }
+
+    .value-card:hover {
+        transform: translateY(-5px);
+    }
+
+    @@media (max-width: 768px) {
+        .hero-section {
+            padding: 2rem 0;
+        }
+        
+        .display-4 {
+            font-size: 2.5rem;
+        }
+    }
+</style>
