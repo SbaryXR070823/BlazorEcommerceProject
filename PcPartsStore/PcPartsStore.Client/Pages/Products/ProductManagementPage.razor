@@ -225,6 +225,7 @@
     private bool showSuggestions = false;
     private List<string> searchSuggestions = new List<string>();
     private const string SearchHistoryKey = "ProductSearchHistory";
+    private const string ProductNamesKey = "ProductNamesCache";
     private System.Timers.Timer _debounceTimer;
     private bool _documentClickAdded = false;
 
@@ -237,6 +238,7 @@
         userRoles = await UserService.GetUserRoleAsync();
 
         await LoadSpecificationsForDisplayedProducts();
+        await CacheProductNames(); 
 
         if (userRoles == null || !userRoles.Any() || userRoles.Contains("User"))
         {
@@ -253,6 +255,18 @@
         _debounceTimer.AutoReset = false;
 
         await SpinnerService.HideSpinnerAsync();
+    }
+
+    private async Task CacheProductNames()
+    {
+        var cachedNames = await LocalStorageService.GetItemAsync<List<string>>(ProductNamesKey);
+
+        if (cachedNames == null || !cachedNames.Any())
+        {
+            var allProducts = await ProductService.GetProductsAsync(new ProductFilters());
+            var productNames = allProducts.Select(p => p.Name).Distinct().ToList();
+            await LocalStorageService.SaveItemAsync(ProductNamesKey, productNames);
+        }
     }
     
     private void HandlePageClick()
@@ -362,13 +376,12 @@
             filters.Name = searchInput;
             if (!string.IsNullOrEmpty(filters.Name))
             {
-                var searchHistory = await LocalStorageService.GetItemAsync<List<SearchHistoryItem>>(SearchHistoryKey) ?? new List<SearchHistoryItem>();
-                searchSuggestions = searchHistory
-                    .Where(s => s.Term.Contains(filters.Name, StringComparison.OrdinalIgnoreCase))
-                    .OrderByDescending(s => s.Timestamp)
-                    .Select(s => s.Term)
+                var cachedNames = await LocalStorageService.GetItemAsync<List<string>>(ProductNamesKey) ?? new List<string>();
+                searchSuggestions = cachedNames
+                    .Where(name => name.Contains(filters.Name, StringComparison.OrdinalIgnoreCase))
                     .Take(5)
                     .ToList();
+
                 showSuggestions = searchSuggestions.Any();
             }
             else
@@ -377,6 +390,13 @@
             }
             StateHasChanged();
         });
+    }
+
+    private async Task RefreshProductNamesCache()
+    {
+        var allProducts = await ProductService.GetProductsAsync(new ProductFilters());
+        var productNames = allProducts.Select(p => p.Name).Distinct().ToList();
+        await LocalStorageService.SaveItemAsync(ProductNamesKey, productNames);
     }
 
     private void SelectSuggestion(string suggestion)
@@ -422,7 +442,15 @@
 
     private void ConfirmDelete(int productId) { productIdToDelete = productId; showDeleteModal = true; }
     private void CloseDeleteModal() => showDeleteModal = false;
-    private async Task DeleteProduct() { await SpinnerService.ShowSpinnerAsync(); await ProductService.DeleteProductAsync(productIdToDelete); products = await ProductService.GetProductsAsync(filters); showDeleteModal = false; await SpinnerService.HideSpinnerAsync(); }
+    private async Task DeleteProduct()
+    {
+        await SpinnerService.ShowSpinnerAsync();
+        await ProductService.DeleteProductAsync(productIdToDelete);
+        products = await ProductService.GetProductsAsync(filters);
+        await RefreshProductNamesCache();
+        showDeleteModal = false;
+        await SpinnerService.HideSpinnerAsync();
+    }
     private async Task ClearFilters()
     {
         await SpinnerService.ShowSpinnerAsync();
@@ -433,8 +461,8 @@
         };
 
         await LoadSpecifications();
-
         products = await ProductService.GetProductsAsync(filters);
+        await RefreshProductNamesCache(); 
 
         await SpinnerService.HideSpinnerAsync();
     }
