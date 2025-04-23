@@ -76,7 +76,7 @@ This project follows a clean architecture approach with clear separation of conc
 
 1. Clone the repository
    ```sh
-   git clone https://github.com/yourusername/PcPartsStore.git
+   git clone https://github.com/SbaryXR070823/BlazorEcommerceProject
    ```
 
 2. Update the connection string in `appsettings.json` to point to your SQL Server instance
